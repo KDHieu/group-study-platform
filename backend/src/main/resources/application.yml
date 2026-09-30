@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: group-study-platform
+
+  profiles:
+    default: local
+
+  jpa:
+    open-in-view: false
+  web:
+    error:
+      include-message: never
+      include-stacktrace: never
+
+server:
+  port: 8080
