@@ -16,11 +16,14 @@ public class GatewayRoutesConfig {
     ) {
         return builder.routes()
 
-                .route(
-                        "auth-service",
-                        route -> route
-                                .path("/api/auth/**")
-                                .uri(backendUrl)
+                .route("auth-service", route -> route
+                        .path("/api/auth/**")
+                        .uri(backendUrl)
+                )
+
+                .route("group-service", route -> route
+                        .path("/api/groups/**")
+                        .uri(backendUrl)
                 )
 
                 .build();
