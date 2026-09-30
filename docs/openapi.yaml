@@ -1,0 +1,620 @@
+openapi: 3.1.0
+info:
+  title: Group Study Platform API
+  description: |
+    REST API for the Group Study Platform.
+
+    Current features include:
+    - Authentication
+    - Study groups
+    - Group membership
+  version: v1
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+tags:
+- name: Authentication
+  description: "Operations for user registration, login and authentication"
+- name: Group Memberships
+  description: "Operations for joining, leaving and viewing members of study groups"
+- name: Study Groups
+  description: "Operations for creating, searching, viewing and deleting study groups"
+paths:
+  /api/groups:
+    get:
+      tags:
+      - Study Groups
+      summary: Get study groups
+      description: |
+        Returns a paginated list of study groups.
+
+        The optional search parameter filters groups by name.
+        Results are sorted by creation time in descending order.
+      operationId: getGroups
+      parameters:
+      - name: search
+        in: query
+        description: Optional text used to search study groups by name
+        required: false
+        schema:
+          type: string
+          default: ""
+        example: distributed systems
+      - name: page
+        in: query
+        description: Zero-based page number
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+        example: 0
+      - name: size
+        in: query
+        description: Number of study groups per page
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+        example: 10
+      responses:
+        "200":
+          description: Study groups retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PagedModelGroupResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      security:
+      - bearerAuth: []
+    post:
+      tags:
+      - Study Groups
+      summary: Create a study group
+      description: |
+        Creates a new study group.
+
+        The authenticated user automatically becomes the owner
+        and is added as an OWNER member of the group.
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+        required: true
+      responses:
+        "201":
+          description: Study group created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      security:
+      - bearerAuth: []
+  /api/groups/{groupId}/join:
+    post:
+      tags:
+      - Group Memberships
+      summary: Join a study group
+      description: |
+        Adds the currently authenticated user to the study group
+        with the MEMBER role.
+
+        A user cannot join the same group more than once.
+      operationId: joinGroup
+      parameters:
+      - name: groupId
+        in: path
+        description: Unique identifier of the study group
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "204":
+          description: Joined the study group successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      security:
+      - bearerAuth: []
+  /api/auth/register:
+    post:
+      tags:
+      - Authentication
+      summary: Register a new user
+      description: |
+        Creates a new user account.
+
+        The endpoint is public and does not require authentication.
+        Username and email must be unique.
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /api/auth/login:
+    post:
+      tags:
+      - Authentication
+      summary: Login
+      description: |
+        Authenticates a user using email and password.
+
+        If the credentials are valid, the server returns
+        a JWT access token that can be used for protected endpoints.
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: Login successful
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/groups/{groupId}:
+    get:
+      tags:
+      - Study Groups
+      summary: Get study group details
+      description: |
+        Returns detailed information about a study group
+        identified by its unique ID.
+      operationId: getGroupById
+      parameters:
+      - name: groupId
+        in: path
+        description: Unique identifier of the study group
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "200":
+          description: Study group retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Study Groups
+      summary: Delete a study group
+      description: |
+        Deletes an existing study group.
+
+        Only the owner of the group is allowed to perform this operation.
+
+        Associated group memberships are automatically removed
+        through database cascading.
+      operationId: deleteGroup
+      parameters:
+      - name: groupId
+        in: path
+        description: Unique identifier of the study group
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "204":
+          description: Study group deleted successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+      - bearerAuth: []
+  /api/groups/{groupId}/members:
+    get:
+      tags:
+      - Group Memberships
+      summary: Get study group members
+      description: |
+        Returns all members of the specified study group,
+        including username, role and join time.
+      operationId: getMembers
+      parameters:
+      - name: groupId
+        in: path
+        description: Unique identifier of the study group
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "200":
+          description: Group members retrieved successfully
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMemberResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      security:
+      - bearerAuth: []
+  /api/auth/me:
+    get:
+      tags:
+      - Authentication
+      summary: Get current authenticated user
+      description: |
+        Returns basic information about the currently authenticated user.
+
+        The user ID is extracted from the JWT subject
+        and the username is extracted from the username claim.
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Current user retrieved successfully
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+      security:
+      - bearerAuth: []
+  /api/groups/{groupId}/members/me:
+    delete:
+      tags:
+      - Group Memberships
+      summary: Leave a study group
+      description: |
+        Removes the currently authenticated user from the study group.
+
+        The group owner cannot leave the group because
+        every study group must have an owner.
+      operationId: leaveGroup
+      parameters:
+      - name: groupId
+        in: path
+        description: Unique identifier of the study group
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        "204":
+          description: Left the study group successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    ErrorResponse:
+      description: Standard error response returned by the API
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the error occurred
+          example: 2026-10-01T03:30:00Z
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+          example: 400
+        error:
+          type: string
+          description: HTTP error name
+          example: Bad Request
+        message:
+          type: string
+          description: Human-readable error message
+          example: Validation failed
+        path:
+          type: string
+          description: Request path that caused the error
+          example: /api/auth/register
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+            description: |
+              Field-specific validation errors.
+              The map key is the field name and the value is the validation message.
+              This value may be null or empty for non-validation errors.
+            example: "{\"email\":\"must be a well-formed email address\",\"password\"\
+              :\"size must be between 8 and 100\"}"
+          description: |
+            Field-specific validation errors.
+            The map key is the field name and the value is the validation message.
+            This value may be null or empty for non-validation errors.
+          example:
+            email: must be a well-formed email address
+            password: size must be between 8 and 100
+    CreateGroupRequest:
+      type: object
+      description: Request payload for creating a study group
+      properties:
+        name:
+          type: string
+          description: Name of the study group
+          example: Distributed Systems Study Group
+          maxLength: 100
+          minLength: 3
+        description:
+          type: string
+          description: Optional description of the study group
+          example: A group for students learning distributed systems and microservices.
+          maxLength: 1000
+          minLength: 0
+      required:
+      - name
+    GroupResponse:
+      type: object
+      description: Study group information
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the study group
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Name of the study group
+          example: Distributed Systems Study Group
+        description:
+          type: string
+          description: Description of the study group
+          example: A group for students learning distributed systems.
+        ownerId:
+          type: string
+          format: uuid
+          description: Unique identifier of the group owner
+          example: 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+        ownerUsername:
+          type: string
+          description: Username of the group owner
+          example: hieu
+        createdAt:
+          type: string
+          format: date-time
+          description: Time when the study group was created
+          example: 2026-10-01T03:00:00Z
+    RegisterRequest:
+      type: object
+      description: Request payload for registering a new user
+      properties:
+        username:
+          type: string
+          description: Unique username of the user
+          example: hieu
+          maxLength: 50
+          minLength: 3
+        email:
+          type: string
+          format: email
+          description: Email address used for authentication
+          example: hieu@example.com
+          minLength: 1
+        password:
+          type: string
+          description: Password of the new account
+          example: "12345678"
+          maxLength: 100
+          minLength: 8
+      required:
+      - email
+      - password
+      - username
+    UserResponse:
+      type: object
+      description: Public information about a user
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the user
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Unique username of the user
+          example: hieu
+        email:
+          type: string
+          description: Email address of the user
+          example: hieu@example.com
+        createdAt:
+          type: string
+          format: date-time
+          description: Time when the user account was created
+          example: 2026-10-01T03:00:00Z
+    LoginRequest:
+      type: object
+      description: Request payload for user authentication
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address of the registered user
+          example: hieu@example.com
+          minLength: 1
+        password:
+          type: string
+          description: User password
+          example: "12345678"
+          minLength: 1
+      required:
+      - email
+      - password
+    LoginResponse:
+      type: object
+      description: Response returned after successful authentication
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token used to authenticate subsequent requests
+          example: eyJhbGciOiJSUzI1NiJ9...
+        tokenType:
+          type: string
+          description: Authentication scheme used with the access token
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          description: Access token lifetime in seconds
+          example: 3600
+        user:
+          $ref: "#/components/schemas/UserResponse"
+          description: Information about the authenticated user
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          format: int64
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+    PagedModelGroupResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupResponse"
+        page:
+          $ref: "#/components/schemas/PageMetadata"
+    GroupMemberResponse:
+      type: object
+      description: Information about a member of a study group
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: Unique identifier of the user
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Username of the group member
+          example: member1
+        role:
+          type: string
+          description: Role of the user inside the study group
+          enum:
+          - OWNER
+          - MEMBER
+          example: MEMBER
+        joinedAt:
+          type: string
+          format: date-time
+          description: Time when the user joined the study group
+          example: 2026-10-01T03:30:00Z
+    CurrentUserResponse:
+      type: object
+      description: Basic information about the currently authenticated user
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the authenticated user
+          example: 550e8400-e29b-41d4-a716-446655440000
+        username:
+          type: string
+          description: Username of the authenticated user
+          example: hieu
+  responses:
+    BadRequest:
+      description: Invalid request or validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication is required or credentials are invalid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: The authenticated user does not have permission to perform this
+        operation
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: The request conflicts with the current state of the resource
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: An unexpected server error occurred
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
