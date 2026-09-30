@@ -4,11 +4,13 @@ import {
   Routes,
 } from "react-router-dom";
 
+import GroupDetailPage from "@/pages/GroupDetailPage"
 import AppLayout from "@/components/layout/AppLayout"
 import RegisterPage from "@/pages/RegisterPage";
 import ProtectedRoute from "@/auth/ProtectedRoute";
 import DashboardPage from "@/pages/DashboardPage"
 import LoginPage from "@/pages/LoginPage";
+import GroupsPage from "@/pages/GroupsPage"
 
 function App() {
   return (
@@ -27,7 +29,12 @@ function App() {
 
                   <Route
                       path="/groups"
-                      element={<div>Study Groups</div>}
+                      element={<GroupsPage />}
+                  />
+
+                  <Route
+                      path="/groups/:groupId"
+                      element={<GroupDetailPage />}
                   />
 
                   <Route
