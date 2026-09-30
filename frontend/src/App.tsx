@@ -4,9 +4,10 @@ import {
   Routes,
 } from "react-router-dom";
 
+import AppLayout from "@/components/layout/AppLayout"
 import RegisterPage from "@/pages/RegisterPage";
 import ProtectedRoute from "@/auth/ProtectedRoute";
-import HomePage from "@/pages/HomePage";
+import DashboardPage from "@/pages/DashboardPage"
 import LoginPage from "@/pages/LoginPage";
 
 function App() {
@@ -17,12 +18,39 @@ function App() {
             element={<LoginPage />}
         />
 
-        <Route element={<ProtectedRoute />}>
-          <Route
-              path="/"
-              element={<HomePage />}
-          />
-        </Route>
+          <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                  <Route
+                      path="/"
+                      element={<DashboardPage />}
+                  />
+
+                  <Route
+                      path="/groups"
+                      element={<div>Study Groups</div>}
+                  />
+
+                  <Route
+                      path="/rooms"
+                      element={<div>Study Rooms</div>}
+                  />
+
+                  <Route
+                      path="/friends"
+                      element={<div>Friends</div>}
+                  />
+
+                  <Route
+                      path="/challenges"
+                      element={<div>Challenges</div>}
+                  />
+
+                  <Route
+                      path="/messages"
+                      element={<div>Messages</div>}
+                  />
+              </Route>
+          </Route>
 
         <Route
             path="*"
