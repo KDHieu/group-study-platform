@@ -1,5 +1,6 @@
 package com.grouplearning.backend.service;
 
+import com.grouplearning.backend.dto.response.LoginResponse;
 import com.grouplearning.backend.dto.request.LoginRequest;
 import com.grouplearning.backend.dto.request.RegisterRequest;
 import com.grouplearning.backend.dto.response.UserResponse;
@@ -30,6 +31,9 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private JwtService jwtService;
 
     @InjectMocks
     private AuthService authService;
@@ -98,6 +102,7 @@ class AuthServiceTest {
 
     @Test
     void login_shouldReturnUser_whenCredentialsAreValid() {
+
         LoginRequest request = new LoginRequest(
                 "hieu@example.com",
                 "12345678"
@@ -114,19 +119,57 @@ class AuthServiceTest {
         when(user.getPasswordHash()).thenReturn("hashed-password");
         when(user.getCreatedAt()).thenReturn(createdAt);
 
-        when(userRepository.findByEmailIgnoreCase("hieu@example.com"))
-                .thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(
+                "hieu@example.com"
+        )).thenReturn(Optional.of(user));
 
         when(passwordEncoder.matches(
                 "12345678",
                 "hashed-password"
         )).thenReturn(true);
 
-        UserResponse response = authService.login(request);
+        // Hai dòng quan trọng đang thiếu/sai
+        when(jwtService.generateAccessToken(user))
+                .thenReturn("test-jwt-token");
 
-        assertEquals(userId, response.id());
-        assertEquals("hieu", response.username());
-        assertEquals("hieu@example.com", response.email());
+        when(jwtService.getAccessTokenExpirationSeconds())
+                .thenReturn(3600L);
+
+        LoginResponse response =
+                authService.login(request);
+
+        assertEquals(
+                "test-jwt-token",
+                response.accessToken()
+        );
+
+        assertEquals(
+                "Bearer",
+                response.tokenType()
+        );
+
+        assertEquals(
+                3600L,
+                response.expiresIn()
+        );
+
+        assertEquals(
+                userId,
+                response.user().id()
+        );
+
+        assertEquals(
+                "hieu",
+                response.user().username()
+        );
+
+        assertEquals(
+                "hieu@example.com",
+                response.user().email()
+        );
+
+        verify(jwtService)
+                .generateAccessToken(user);
     }
 
     @Test

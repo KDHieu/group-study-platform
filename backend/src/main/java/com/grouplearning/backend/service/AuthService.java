@@ -1,5 +1,6 @@
 package com.grouplearning.backend.service;
 
+import com.grouplearning.backend.dto.response.LoginResponse;
 import com.grouplearning.backend.dto.request.RegisterRequest;
 import com.grouplearning.backend.dto.response.UserResponse;
 import com.grouplearning.backend.entity.User;
@@ -18,13 +19,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Transactional
@@ -63,7 +67,7 @@ public class AuthService {
     }
 
     @Transactional(readOnly = true)
-    public UserResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request) {
 
         String email = request.email()
                 .trim()
@@ -72,7 +76,9 @@ public class AuthService {
         User user = userRepository
                 .findByEmailIgnoreCase(email)
                 .orElseThrow(() ->
-                        new UnauthorizedException("Invalid email or password")
+                        new UnauthorizedException(
+                                "Invalid email or password"
+                        )
                 );
 
         if (!passwordEncoder.matches(
@@ -84,11 +90,21 @@ public class AuthService {
             );
         }
 
-        return new UserResponse(
+        UserResponse userResponse = new UserResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getCreatedAt()
+        );
+
+        String accessToken =
+                jwtService.generateAccessToken(user);
+
+        return new LoginResponse(
+                accessToken,
+                "Bearer",
+                jwtService.getAccessTokenExpirationSeconds(),
+                userResponse
         );
     }
 }
