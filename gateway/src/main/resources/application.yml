@@ -23,9 +23,9 @@ spring:
                   - "*"
                 allow-credentials: true
 
-server:
-  port: 8080
-
 services:
   backend:
     url: ${BACKEND_URL:http://localhost:8081}
+
+server:
+  port: ${SERVER_PORT:8080}

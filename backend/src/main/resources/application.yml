@@ -5,15 +5,21 @@ spring:
   profiles:
     default: local
 
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/group_learning}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
   jpa:
     open-in-view: false
+
   web:
     error:
       include-message: never
       include-stacktrace: never
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8081}
 
 app:
   jwt:
