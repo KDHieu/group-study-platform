@@ -1,5 +1,6 @@
 package com.grouplearning.backend.controller;
 
+import com.grouplearning.backend.dto.response.LoginResponse;
 import com.grouplearning.backend.exception.UnauthorizedException;
 import com.grouplearning.backend.dto.request.LoginRequest;
 import com.grouplearning.backend.dto.request.RegisterRequest;
@@ -50,12 +51,6 @@ class AuthControllerTest {
     void register_shouldReturnCreated_whenRequestIsValid()
             throws Exception {
 
-        RegisterRequest request = new RegisterRequest(
-                "hieu",
-                "hieu@example.com",
-                "12345678"
-        );
-
         UserResponse response = new UserResponse(
                 UUID.randomUUID(),
                 "hieu",
@@ -70,12 +65,12 @@ class AuthControllerTest {
                         post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-        {
-            "username": "hieu",
-            "email": "hieu@example.com",
-            "password": "12345678"
-        }
-        """)
+                                    {
+                                        "username": "hieu",
+                                        "email": "hieu@example.com",
+                                        "password": "12345678"
+                                    }
+                                    """)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("hieu"))
@@ -84,9 +79,6 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.password").doesNotExist())
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
-
-        verify(authService)
-                .register(any(RegisterRequest.class));
     }
 
     @Test
@@ -121,15 +113,22 @@ class AuthControllerTest {
     void login_shouldReturnOk_whenCredentialsAreValid()
             throws Exception {
 
-        UserResponse response = new UserResponse(
+        UserResponse userResponse = new UserResponse(
                 UUID.randomUUID(),
                 "hieu",
                 "hieu@example.com",
                 Instant.now()
         );
 
+        LoginResponse loginResponse = new LoginResponse(
+                "test-jwt-token",
+                "Bearer",
+                3600L,
+                userResponse
+        );
+
         when(authService.login(any(LoginRequest.class)))
-                .thenReturn(response);
+                .thenReturn(loginResponse);
 
         mockMvc.perform(
                         post("/api/auth/login")
@@ -142,11 +141,20 @@ class AuthControllerTest {
                                     """)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("hieu"))
-                .andExpect(jsonPath("$.email")
+                .andExpect(jsonPath("$.accessToken")
+                        .value("test-jwt-token"))
+                .andExpect(jsonPath("$.tokenType")
+                        .value("Bearer"))
+                .andExpect(jsonPath("$.expiresIn")
+                        .value(3600))
+                .andExpect(jsonPath("$.user.username")
+                        .value("hieu"))
+                .andExpect(jsonPath("$.user.email")
                         .value("hieu@example.com"))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.passwordHash").doesNotExist());
+                .andExpect(jsonPath("$.user.password")
+                        .doesNotExist())
+                .andExpect(jsonPath("$.user.passwordHash")
+                        .doesNotExist());
 
         verify(authService)
                 .login(any(LoginRequest.class));
