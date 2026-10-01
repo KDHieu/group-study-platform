@@ -30,6 +30,10 @@ public class GatewayRoutesConfig {
                         .path("/api/users/**")
                         .uri(backendUrl))
 
+                .route("friend-service", route -> route
+                        .path("/api/friends/**")
+                        .uri(backendUrl))
+
                 .build();
     }
 }

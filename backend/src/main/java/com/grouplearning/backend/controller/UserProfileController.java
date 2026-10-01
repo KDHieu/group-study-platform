@@ -19,6 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import com.grouplearning.backend.dto.response.UserSearchResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 import java.util.UUID;
 
@@ -210,5 +216,52 @@ public class UserProfileController {
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .body(avatar.content());
+    }
+
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search users",
+            description = "Searches users by username or display name"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Users retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            )
+    })
+    public ResponseEntity<Page<UserSearchResponse>>
+    searchUsers(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt,
+
+            @RequestParam(
+                    defaultValue = ""
+            )
+            String query,
+
+            @Parameter(hidden = true)
+            @PageableDefault(
+                    size = 10,
+                    sort = "username",
+                    direction = Sort.Direction.ASC
+            )
+            Pageable pageable
+    ) {
+        UUID currentUserId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
+
+        return ResponseEntity.ok(
+                userProfileService.searchUsers(
+                        currentUserId,
+                        query,
+                        pageable
+                )
+        );
     }
 }
