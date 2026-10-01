@@ -1,80 +1,86 @@
 import {
-  Navigate,
-  Route,
-  Routes,
+    Navigate,
+    Route,
+    Routes,
 } from "react-router-dom";
 
-import GroupDetailPage from "@/pages/GroupDetailPage"
-import AppLayout from "@/components/layout/AppLayout"
-import RegisterPage from "@/pages/RegisterPage";
 import ProtectedRoute from "@/auth/ProtectedRoute";
-import DashboardPage from "@/pages/DashboardPage"
+import AppLayout from "@/components/layout/AppLayout";
+import DashboardPage from "@/pages/DashboardPage";
+import GroupDetailPage from "@/pages/GroupDetailPage";
+import GroupsPage from "@/pages/GroupsPage";
 import LoginPage from "@/pages/LoginPage";
-import GroupsPage from "@/pages/GroupsPage"
+import ProfilePage from "@/pages/ProfilePage";
+import RegisterPage from "@/pages/RegisterPage";
 
 function App() {
-  return (
-      <Routes>
-        <Route
-            path="/login"
-            element={<LoginPage />}
-        />
+    return (
+        <Routes>
+            <Route
+                path="/login"
+                element={<LoginPage />}
+            />
 
-          <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                  <Route
-                      path="/"
-                      element={<DashboardPage />}
-                  />
+            <Route
+                path="/register"
+                element={<RegisterPage />}
+            />
 
-                  <Route
-                      path="/groups"
-                      element={<GroupsPage />}
-                  />
+            <Route element={<ProtectedRoute />}>
+                <Route element={<AppLayout />}>
+                    <Route
+                        path="/"
+                        element={<DashboardPage />}
+                    />
 
-                  <Route
-                      path="/groups/:groupId"
-                      element={<GroupDetailPage />}
-                  />
+                    <Route
+                        path="/profile"
+                        element={<ProfilePage />}
+                    />
 
-                  <Route
-                      path="/rooms"
-                      element={<div>Study Rooms</div>}
-                  />
+                    <Route
+                        path="/groups"
+                        element={<GroupsPage />}
+                    />
 
-                  <Route
-                      path="/friends"
-                      element={<div>Friends</div>}
-                  />
+                    <Route
+                        path="/groups/:groupId"
+                        element={<GroupDetailPage />}
+                    />
 
-                  <Route
-                      path="/challenges"
-                      element={<div>Challenges</div>}
-                  />
+                    <Route
+                        path="/rooms"
+                        element={<div>Study Rooms</div>}
+                    />
 
-                  <Route
-                      path="/messages"
-                      element={<div>Messages</div>}
-                  />
-              </Route>
-          </Route>
+                    <Route
+                        path="/friends"
+                        element={<div>Friends</div>}
+                    />
 
-        <Route
-            path="*"
-            element={
-              <Navigate
-                  to="/"
-                  replace
-              />
-            }
-        />
+                    <Route
+                        path="/challenges"
+                        element={<div>Challenges</div>}
+                    />
 
-        <Route
-            path="/register"
-            element={<RegisterPage />}
-        />
-      </Routes>
-  );
+                    <Route
+                        path="/messages"
+                        element={<div>Messages</div>}
+                    />
+                </Route>
+            </Route>
+
+            <Route
+                path="*"
+                element={
+                    <Navigate
+                        to="/"
+                        replace
+                    />
+                }
+            />
+        </Routes>
+    );
 }
 
 export default App;

@@ -26,6 +26,10 @@ public class GatewayRoutesConfig {
                         .uri(backendUrl)
                 )
 
+                .route("user-service", route -> route
+                        .path("/api/users/**")
+                        .uri(backendUrl))
+
                 .build();
     }
 }
