@@ -8,6 +8,10 @@ import com.grouplearning.backend.exception.NotFoundException;
 import com.grouplearning.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.grouplearning.backend.dto.response.UserSearchResponse;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
@@ -88,6 +92,26 @@ public class UserProfileService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public Page<UserSearchResponse> searchUsers(
+            UUID currentUserId,
+            String query,
+            Pageable pageable
+    ) {
+        String normalizedQuery =
+                query == null
+                        ? ""
+                        : query.trim();
+
+        return userRepository
+                .searchUsers(
+                        currentUserId,
+                        normalizedQuery,
+                        pageable
+                )
+                .map(this::toSearchResponse);
+    }
+
     private String normalizeBio(String bio) {
         if (bio == null) {
             return null;
@@ -111,6 +135,29 @@ public class UserProfileService {
         }
 
         return new UserProfileResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName(),
+                user.getBio(),
+                avatarUrl
+        );
+    }
+
+    private UserSearchResponse toSearchResponse(
+            User user
+    ) {
+        String avatarUrl = null;
+
+        if (user.getAvatarUrl() != null
+                && !user.getAvatarUrl().isBlank()) {
+
+            avatarUrl =
+                    "/api/users/"
+                            + user.getId()
+                            + "/avatar";
+        }
+
+        return new UserSearchResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getDisplayName(),
