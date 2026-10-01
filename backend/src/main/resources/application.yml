@@ -25,3 +25,9 @@ app:
   jwt:
     secret: ${JWT_SECRET:dev-only-secret-key-change-me-1234567890}
     access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:3600}
+
+  storage:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:group-study-media}

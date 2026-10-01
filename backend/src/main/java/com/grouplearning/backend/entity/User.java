@@ -24,6 +24,15 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Column(name = "display_name", nullable = false, length = 100)
+    private String displayName;
+
+    @Column(length = 500)
+    private String bio;
+
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -41,6 +50,7 @@ public class User {
             String passwordHash
     ) {
         this.username = username;
+        this.displayName = username;
         this.email = email;
         this.passwordHash = passwordHash;
     }
@@ -67,5 +77,29 @@ public class User {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void updateProfile(
+            String displayName,
+            String bio
+    ) {
+        this.displayName = displayName;
+        this.bio = bio;
+    }
+
+    public void updateAvatar(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

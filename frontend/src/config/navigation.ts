@@ -1,5 +1,6 @@
 import {
     BookOpen,
+    CircleUserRound,
     Home,
     MessageCircle,
     Trophy,
@@ -12,6 +13,11 @@ export const mainNavigation = [
         title: "Dashboard",
         path: "/",
         icon: Home,
+    },
+    {
+        title: "Profile",
+        path: "/profile",
+        icon: CircleUserRound,
     },
     {
         title: "Study Groups",
