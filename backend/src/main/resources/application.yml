@@ -31,3 +31,8 @@ app:
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket: ${MINIO_BUCKET:group-study-media}
+
+services:
+  backend:
+    url: ${BACKEND_URL:http://localhost:8081}
+    ws-url: ${BACKEND_WS_URL:ws://localhost:8081}

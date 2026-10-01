@@ -2,6 +2,7 @@ import { Trash2, UserMinus, UserPlus, Users } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getApiErrorMessage } from "@/api/error"
+import GroupChat from "@/components/chat/GroupChat"
 
 import {
     deleteGroup,
@@ -268,6 +269,26 @@ export default function GroupDetailPage() {
                     ))}
                 </CardContent>
             </Card>
+
+            {isMember && user?.id ? (
+                <GroupChat
+                    groupId={group.id}
+                    currentUserId={user.id}
+                />
+            ) : (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>
+                            Group chat
+                        </CardTitle>
+
+                        <CardDescription>
+                            Join this study group to
+                            access the group chat.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            )}
         </div>
     )
 }
