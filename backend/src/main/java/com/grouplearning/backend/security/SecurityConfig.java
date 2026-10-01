@@ -42,6 +42,11 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .requestMatchers(
+                                "/ws",
+                                "/ws/**"
+                        ).permitAll()
+
+                        .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/users/*/avatar"
                         ).permitAll()
