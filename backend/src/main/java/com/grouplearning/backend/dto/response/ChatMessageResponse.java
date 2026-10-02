@@ -46,9 +46,13 @@ public record ChatMessageResponse(
         String mediaUrl,
 
         @Schema(
+                description = "The length of voice message"
+        )
+        Integer durationMs,
+
+        @Schema(
                 description = "Time when the message was sent"
         )
         Instant createdAt
-
 ) {
 }
