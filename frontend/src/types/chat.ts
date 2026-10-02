@@ -18,6 +18,7 @@ export interface ChatMessage {
     type: ChatMessageType
     content: string | null
     mediaUrl: string | null
+    durationMs: number | null
     createdAt: string
 }
 

@@ -64,6 +64,9 @@ public class ChatMessage {
     )
     private Instant createdAt;
 
+    @Column(name = "duration_ms")
+    private Integer durationMs;
+
     protected ChatMessage() {
     }
 
@@ -80,6 +83,24 @@ public class ChatMessage {
         this.type = type;
         this.content = content;
         this.mediaUrl = mediaUrl;
+        this.createdAt = Instant.now();
+    }
+
+    public ChatMessage(
+            StudyGroup group,
+            User sender,
+            ChatMessageType type,
+            String content,
+            String mediaUrl,
+            Integer durationMs
+    ) {
+        this.id = UUID.randomUUID();
+        this.group = group;
+        this.sender = sender;
+        this.type = type;
+        this.content = content;
+        this.mediaUrl = mediaUrl;
+        this.durationMs = durationMs;
         this.createdAt = Instant.now();
     }
 
@@ -109,5 +130,9 @@ public class ChatMessage {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Integer getDurationMs() {
+        return durationMs;
     }
 }

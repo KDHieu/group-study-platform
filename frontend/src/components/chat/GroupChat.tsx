@@ -5,6 +5,8 @@ import {
 } from "react"
 import type { Client } from "@stomp/stompjs"
 import { Loader2, Send } from "lucide-react"
+import VoiceMessagePlayer from "@/components/chat/VoiceMessagePlayer"
+import VoiceRecorder from "@/components/chat/VoiceRecorder"
 
 import { chatApi } from "@/api/chatApi"
 import { createChatClient } from "@/api/chatSocket"
@@ -345,6 +347,17 @@ export default function GroupChat({
         }
     }
 
+    async function sendVoiceMessage(
+        audio: Blob,
+        durationMs: number,
+    ) {
+        await chatApi.uploadAudio(
+            groupId,
+            audio,
+            durationMs,
+        )
+    }
+
     useEffect(() => {
         let cancelled = false
 
@@ -669,10 +682,21 @@ export default function GroupChat({
                                                                 : "bg-muted"
                                                         }`}
                                                     >
-                                                        {chatMessage.type ===
-                                                        "TEXT"
-                                                            ? chatMessage.content
-                                                            : `[${chatMessage.type}]`}
+                                                        {chatMessage.type === "TEXT" ? (
+                                                            chatMessage.content
+                                                        ) : chatMessage.type === "AUDIO" &&
+                                                        chatMessage.mediaUrl ? (
+                                                            <VoiceMessagePlayer
+                                                                mediaUrl={
+                                                                    chatMessage.mediaUrl
+                                                                }
+                                                                durationMs={
+                                                                    chatMessage.durationMs
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            `[${chatMessage.type}]`
+                                                        )}
                                                     </div>
 
                                                     <p className="mt-1 text-xs text-muted-foreground">
@@ -717,39 +741,37 @@ export default function GroupChat({
                                 : null}
                         </div>
 
-                        <div className="flex gap-2">
-                            <Input
-                                placeholder="Write a message..."
-                                value={
-                                    message
-                                }
-                                disabled={
-                                    !connected
-                                }
-                                maxLength={
-                                    2000
-                                }
-                                onChange={(
-                                    event,
-                                ) =>
-                                    handleMessageChange(
-                                        event
-                                            .target
-                                            .value,
-                                    )
-                                }
-                                onKeyDown={(
-                                    event,
-                                ) => {
-                                    if (
-                                        event.key ===
-                                        "Enter" &&
-                                        !event.shiftKey
-                                    ) {
-                                        event.preventDefault()
-                                        sendMessage()
+                        <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                                <Input
+                                    placeholder="Write a message..."
+                                    value={message}
+                                    disabled={!connected}
+                                    maxLength={2000}
+                                    onChange={(event) =>
+                                        handleMessageChange(
+                                            event.target.value,
+                                        )
                                     }
-                                }}
+                                    onKeyDown={(event) => {
+                                        if (
+                                            event.key ===
+                                            "Enter" &&
+                                            !event.shiftKey
+                                        ) {
+                                            event.preventDefault()
+
+                                            sendMessage()
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            <VoiceRecorder
+                                disabled={!connected}
+                                onSend={
+                                    sendVoiceMessage
+                                }
                             />
 
                             <Button
