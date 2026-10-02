@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getApiErrorMessage } from "@/api/error"
 import GroupChat from "@/components/chat/GroupChat"
+import StudyVideoRoom from "@/components/video/StudyVideoRoom"
 
 import {
     deleteGroup,
@@ -269,6 +270,12 @@ export default function GroupDetailPage() {
                     ))}
                 </CardContent>
             </Card>
+
+            {isMember && (
+                <StudyVideoRoom
+                    groupId={group.id}
+                />
+            )}
 
             {isMember && user?.id ? (
                 <GroupChat

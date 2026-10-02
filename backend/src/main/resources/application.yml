@@ -32,6 +32,12 @@ app:
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket: ${MINIO_BUCKET:group-study-media}
 
+  livekit:
+    internal-url: ${LIVEKIT_INTERNAL_URL:http://localhost:7880}
+    public-url: ${LIVEKIT_PUBLIC_URL:ws://localhost:7880}
+    api-key: ${LIVEKIT_API_KEY:devkey}
+    api-secret: ${LIVEKIT_API_SECRET:secret}
+
 services:
   backend:
     url: ${BACKEND_URL:http://localhost:8081}
