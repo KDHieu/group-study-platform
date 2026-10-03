@@ -1,27 +1,26 @@
 package com.grouplearning.backend.service;
 
-import org.springframework.web.multipart.MultipartFile;
 import com.grouplearning.backend.dto.request.UpdateProfileRequest;
 import com.grouplearning.backend.dto.response.UserProfileResponse;
+import com.grouplearning.backend.dto.response.UserSearchResponse;
 import com.grouplearning.backend.entity.User;
 import com.grouplearning.backend.exception.NotFoundException;
 import com.grouplearning.backend.repository.UserRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.grouplearning.backend.dto.response.UserSearchResponse;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 @Service
-public class UserProfileService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final ObjectStorageService objectStorageService;
 
-    public UserProfileService(
+    public UserService(
             UserRepository userRepository,
             ObjectStorageService objectStorageService
     ) {
@@ -32,6 +31,7 @@ public class UserProfileService {
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(UUID userId) {
         User user = findUser(userId);
+
         return toResponse(user);
     }
 
@@ -68,12 +68,6 @@ public class UserProfileService {
         return toResponse(user);
     }
 
-    private User findUser(UUID userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new NotFoundException("User not found"));
-    }
-
     @Transactional(readOnly = true)
     public ObjectStorageService.StoredObject getAvatar(
             UUID userId
@@ -82,6 +76,7 @@ public class UserProfileService {
 
         if (user.getAvatarUrl() == null
                 || user.getAvatarUrl().isBlank()) {
+
             throw new NotFoundException(
                     "User avatar not found"
             );
@@ -112,6 +107,15 @@ public class UserProfileService {
                 .map(this::toSearchResponse);
     }
 
+    private User findUser(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "User not found"
+                        )
+                );
+    }
+
     private String normalizeBio(String bio) {
         if (bio == null) {
             return null;
@@ -119,10 +123,14 @@ public class UserProfileService {
 
         String trimmed = bio.trim();
 
-        return trimmed.isEmpty() ? null : trimmed;
+        return trimmed.isEmpty()
+                ? null
+                : trimmed;
     }
 
-    private UserProfileResponse toResponse(User user) {
+    private UserProfileResponse toResponse(
+            User user
+    ) {
         String avatarUrl = null;
 
         if (user.getAvatarUrl() != null

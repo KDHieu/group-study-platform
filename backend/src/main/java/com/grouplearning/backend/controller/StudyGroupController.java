@@ -1,28 +1,23 @@
 package com.grouplearning.backend.controller;
 
 import com.grouplearning.backend.dto.request.CreateGroupRequest;
+import com.grouplearning.backend.dto.response.GroupMemberResponse;
 import com.grouplearning.backend.dto.response.GroupResponse;
 import com.grouplearning.backend.service.StudyGroupService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-
 import org.springframework.http.HttpStatus;
-
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,13 +28,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/groups")
 @Tag(
         name = "Study Groups",
-        description = "Operations for creating, searching, viewing and deleting study groups"
+        description = "Study group management and membership APIs"
 )
 @SecurityRequirement(name = "bearerAuth")
 public class StudyGroupController {
@@ -49,8 +45,13 @@ public class StudyGroupController {
     public StudyGroupController(
             StudyGroupService studyGroupService
     ) {
-        this.studyGroupService = studyGroupService;
+        this.studyGroupService =
+                studyGroupService;
     }
+
+    // =========================================================
+    // Group management
+    // =========================================================
 
     @Operation(
             summary = "Create a study group",
@@ -78,16 +79,16 @@ public class StudyGroupController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public GroupResponse createGroup(
-
             @Parameter(hidden = true)
             @AuthenticationPrincipal Jwt jwt,
 
             @Valid
             @RequestBody CreateGroupRequest request
     ) {
-
         UUID currentUserId =
-                UUID.fromString(jwt.getSubject());
+                UUID.fromString(
+                        jwt.getSubject()
+                );
 
         return studyGroupService.createGroup(
                 currentUserId,
@@ -116,7 +117,6 @@ public class StudyGroupController {
     })
     @GetMapping
     public Page<GroupResponse> getGroups(
-
             @Parameter(
                     description = "Optional text used to search study groups by name",
                     example = "distributed systems"
@@ -138,7 +138,6 @@ public class StudyGroupController {
             @RequestParam(defaultValue = "10")
             int size
     ) {
-
         Pageable pageable =
                 PageRequest.of(
                         page,
@@ -178,14 +177,12 @@ public class StudyGroupController {
     })
     @GetMapping("/{groupId}")
     public GroupResponse getGroupById(
-
             @Parameter(
                     description = "Unique identifier of the study group",
                     example = "550e8400-e29b-41d4-a716-446655440000"
             )
             @PathVariable UUID groupId
     ) {
-
         return studyGroupService.getGroupById(
                 groupId
         );
@@ -223,7 +220,6 @@ public class StudyGroupController {
     @DeleteMapping("/{groupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteGroup(
-
             @Parameter(hidden = true)
             @AuthenticationPrincipal Jwt jwt,
 
@@ -233,13 +229,152 @@ public class StudyGroupController {
             )
             @PathVariable UUID groupId
     ) {
-
         UUID currentUserId =
-                UUID.fromString(jwt.getSubject());
+                UUID.fromString(
+                        jwt.getSubject()
+                );
 
         studyGroupService.deleteGroup(
                 groupId,
                 currentUserId
+        );
+    }
+
+    // =========================================================
+    // Group membership
+    // =========================================================
+
+    @Operation(
+            summary = "Join a study group",
+            description = """
+                    Adds the currently authenticated user to the study group
+                    with the MEMBER role.
+
+                    A user cannot join the same group more than once.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Joined the study group successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFound"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    ref = "#/components/responses/Conflict"
+            )
+    })
+    @PostMapping("/{groupId}/join")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void joinGroup(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt,
+
+            @Parameter(
+                    description = "Unique identifier of the study group",
+                    example = "550e8400-e29b-41d4-a716-446655440000"
+            )
+            @PathVariable UUID groupId
+    ) {
+        UUID currentUserId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
+
+        studyGroupService.joinGroup(
+                groupId,
+                currentUserId
+        );
+    }
+
+    @Operation(
+            summary = "Leave a study group",
+            description = """
+                    Removes the currently authenticated user from the study group.
+
+                    The group owner cannot leave the group because
+                    every study group must have an owner.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Left the study group successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFound"
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    ref = "#/components/responses/Conflict"
+            )
+    })
+    @DeleteMapping("/{groupId}/members/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveGroup(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Jwt jwt,
+
+            @Parameter(
+                    description = "Unique identifier of the study group",
+                    example = "550e8400-e29b-41d4-a716-446655440000"
+            )
+            @PathVariable UUID groupId
+    ) {
+        UUID currentUserId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
+
+        studyGroupService.leaveGroup(
+                groupId,
+                currentUserId
+        );
+    }
+
+    @Operation(
+            summary = "Get study group members",
+            description = """
+                    Returns all members of the specified study group,
+                    including username, role and join time.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Group members retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFound"
+            )
+    })
+    @GetMapping("/{groupId}/members")
+    public List<GroupMemberResponse> getMembers(
+            @Parameter(
+                    description = "Unique identifier of the study group",
+                    example = "550e8400-e29b-41d4-a716-446655440000"
+            )
+            @PathVariable UUID groupId
+    ) {
+        return studyGroupService.getMembers(
+                groupId
         );
     }
 }

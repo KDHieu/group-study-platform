@@ -4,10 +4,8 @@ import com.grouplearning.backend.dto.request.SendChatMessageRequest;
 import com.grouplearning.backend.dto.request.TypingEventRequest;
 import com.grouplearning.backend.dto.response.ChatMessageResponse;
 import com.grouplearning.backend.dto.response.TypingEventResponse;
-import com.grouplearning.backend.service.GroupChatService;
-
+import com.grouplearning.backend.service.StudyRoomService;
 import jakarta.validation.Valid;
-
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -18,18 +16,18 @@ import java.security.Principal;
 import java.util.UUID;
 
 @Controller
-public class GroupChatWebSocketController {
+public class StudyRoomWebSocketController {
 
-    private final GroupChatService groupChatService;
+    private final StudyRoomService studyRoomService;
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    public GroupChatWebSocketController(
-            GroupChatService groupChatService,
+    public StudyRoomWebSocketController(
+            StudyRoomService studyRoomService,
             SimpMessagingTemplate messagingTemplate
     ) {
-        this.groupChatService =
-                groupChatService;
+        this.studyRoomService =
+                studyRoomService;
 
         this.messagingTemplate =
                 messagingTemplate;
@@ -50,12 +48,11 @@ public class GroupChatWebSocketController {
                 extractUserId(principal);
 
         ChatMessageResponse response =
-                groupChatService
-                        .sendTextMessage(
-                                groupId,
-                                userId,
-                                request.content()
-                        );
+                studyRoomService.sendTextMessage(
+                        groupId,
+                        userId,
+                        request.content()
+                );
 
         messagingTemplate.convertAndSend(
                 "/topic/groups/"
@@ -80,12 +77,11 @@ public class GroupChatWebSocketController {
                 extractUserId(principal);
 
         TypingEventResponse response =
-                groupChatService
-                        .createTypingEvent(
-                                groupId,
-                                userId,
-                                request.typing()
-                        );
+                studyRoomService.createTypingEvent(
+                        groupId,
+                        userId,
+                        request.typing()
+                );
 
         messagingTemplate.convertAndSend(
                 "/topic/groups/"
@@ -112,7 +108,9 @@ public class GroupChatWebSocketController {
                         .getSubject();
 
         try {
-            return UUID.fromString(subject);
+            return UUID.fromString(
+                    subject
+            );
 
         } catch (IllegalArgumentException exception) {
             throw new IllegalStateException(

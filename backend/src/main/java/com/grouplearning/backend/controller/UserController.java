@@ -1,47 +1,58 @@
 package com.grouplearning.backend.controller;
 
-import org.springframework.http.MediaType;
-import org.springframework.web.multipart.MultipartFile;
 import com.grouplearning.backend.dto.request.UpdateProfileRequest;
 import com.grouplearning.backend.dto.response.UserProfileResponse;
-import com.grouplearning.backend.service.UserProfileService;
-
+import com.grouplearning.backend.dto.response.UserSearchResponse;
+import com.grouplearning.backend.service.ObjectStorageService;
+import com.grouplearning.backend.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import jakarta.validation.Valid;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
-import com.grouplearning.backend.dto.response.UserSearchResponse;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
 @Tag(
-        name = "User Profiles",
-        description = "User profile management APIs"
+        name = "Users",
+        description = "User profile, avatar and user search APIs"
 )
 @SecurityRequirement(name = "bearerAuth")
-public class UserProfileController {
+public class UserController {
 
-    private final UserProfileService userProfileService;
+    private final UserService userService;
 
-    public UserProfileController(UserProfileService userProfileService) {
-        this.userProfileService = userProfileService;
+    public UserController(
+            UserService userService
+    ) {
+        this.userService =
+                userService;
     }
+
+    // =========================================================
+    // Profile
+    // =========================================================
 
     @GetMapping("/me/profile")
     @Operation(
@@ -49,7 +60,10 @@ public class UserProfileController {
             description = "Returns profile information of the authenticated user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Profile retrieved successfully"
+            ),
             @ApiResponse(
                     responseCode = "401",
                     ref = "#/components/responses/Unauthorized"
@@ -63,10 +77,15 @@ public class UserProfileController {
             @Parameter(hidden = true)
             @AuthenticationPrincipal Jwt jwt
     ) {
-        UUID userId = UUID.fromString(jwt.getSubject());
+        UUID userId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
 
         return ResponseEntity.ok(
-                userProfileService.getProfile(userId)
+                userService.getProfile(
+                        userId
+                )
         );
     }
 
@@ -76,7 +95,10 @@ public class UserProfileController {
             description = "Updates display name and biography of the authenticated user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Profile updated successfully"
+            ),
             @ApiResponse(
                     responseCode = "400",
                     ref = "#/components/responses/BadRequest"
@@ -95,12 +117,19 @@ public class UserProfileController {
             @AuthenticationPrincipal Jwt jwt,
 
             @Valid
-            @RequestBody UpdateProfileRequest request
+            @RequestBody
+            UpdateProfileRequest request
     ) {
-        UUID userId = UUID.fromString(jwt.getSubject());
+        UUID userId =
+                UUID.fromString(
+                        jwt.getSubject()
+                );
 
         return ResponseEntity.ok(
-                userProfileService.updateProfile(userId, request)
+                userService.updateProfile(
+                        userId,
+                        request
+                )
         );
     }
 
@@ -110,7 +139,10 @@ public class UserProfileController {
             description = "Returns public profile information of another user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Profile retrieved successfully"
+            ),
             @ApiResponse(
                     responseCode = "401",
                     ref = "#/components/responses/Unauthorized"
@@ -128,13 +160,19 @@ public class UserProfileController {
             @PathVariable UUID userId
     ) {
         return ResponseEntity.ok(
-                userProfileService.getProfile(userId)
+                userService.getProfile(
+                        userId
+                )
         );
     }
 
+    // =========================================================
+    // Avatar
+    // =========================================================
+
     @PatchMapping(
             value = "/me/avatar",
-            consumes = "multipart/form-data"
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     @Operation(
             summary = "Update current user's avatar",
@@ -166,10 +204,12 @@ public class UserProfileController {
             MultipartFile file
     ) {
         UUID userId =
-                UUID.fromString(jwt.getSubject());
+                UUID.fromString(
+                        jwt.getSubject()
+                );
 
         return ResponseEntity.ok(
-                userProfileService.updateAvatar(
+                userService.updateAvatar(
                         userId,
                         file
                 )
@@ -198,8 +238,10 @@ public class UserProfileController {
     public ResponseEntity<byte[]> getAvatar(
             @PathVariable UUID userId
     ) {
-        var avatar =
-                userProfileService.getAvatar(userId);
+        ObjectStorageService.StoredObject avatar =
+                userService.getAvatar(
+                        userId
+                );
 
         MediaType mediaType;
 
@@ -213,10 +255,19 @@ public class UserProfileController {
                     MediaType.APPLICATION_OCTET_STREAM;
         }
 
-        return ResponseEntity.ok()
-                .contentType(mediaType)
-                .body(avatar.content());
+        return ResponseEntity
+                .ok()
+                .contentType(
+                        mediaType
+                )
+                .body(
+                        avatar.content()
+                );
     }
+
+    // =========================================================
+    // User search
+    // =========================================================
 
     @GetMapping("/search")
     @Operation(
@@ -233,14 +284,11 @@ public class UserProfileController {
                     ref = "#/components/responses/Unauthorized"
             )
     })
-    public ResponseEntity<Page<UserSearchResponse>>
-    searchUsers(
+    public ResponseEntity<Page<UserSearchResponse>> searchUsers(
             @Parameter(hidden = true)
             @AuthenticationPrincipal Jwt jwt,
 
-            @RequestParam(
-                    defaultValue = ""
-            )
+            @RequestParam(defaultValue = "")
             String query,
 
             @Parameter(hidden = true)
@@ -257,7 +305,7 @@ public class UserProfileController {
                 );
 
         return ResponseEntity.ok(
-                userProfileService.searchUsers(
+                userService.searchUsers(
                         currentUserId,
                         query,
                         pageable
