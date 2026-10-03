@@ -1,0 +1,54 @@
+===== BACKEND CONTROLLERS =====
+
+===== AuthController.java =====
+@RequestMapping("/api/auth")
+@GetMapping("/me")
+@PostMapping("/register")
+@PostMapping("/login")
+
+===== FriendController.java =====
+@RequestMapping("/api/friends")
+@PostMapping("/requests/{userId}")
+@GetMapping("/requests/incoming")
+@GetMapping("/requests/outgoing")
+@PostMapping("/requests/{requestId}/accept")
+@PostMapping("/requests/{requestId}/reject")
+@DeleteMapping("/requests/{requestId}")
+@GetMapping
+@DeleteMapping("/{friendUserId}")
+
+===== StudyGroupController.java =====
+@RequestMapping("/api/groups")
+@PostMapping
+@GetMapping
+@GetMapping("/{groupId}")
+@DeleteMapping("/{groupId}")
+@PostMapping("/{groupId}/join")
+@DeleteMapping("/{groupId}/members/me")
+@GetMapping("/{groupId}/members")
+
+===== StudyRoomController.java =====
+@RequestMapping("/api/groups/{groupId}")
+@GetMapping("/messages")
+@PostMapping(
+@GetMapping(
+@PostMapping("/video/token")
+
+===== StudyRoomWebSocketController.java =====
+@MessageMapping(
+@MessageMapping(
+
+===== UserController.java =====
+@RequestMapping("/api/users")
+@GetMapping("/me/profile")
+@PatchMapping("/me/profile")
+@GetMapping("/{userId}/profile")
+@PatchMapping(
+@GetMapping("/{userId}/avatar")
+@GetMapping("/search")
+
+===== WEBSOCKET CONFIG =====
+C:\Users\PC\IdeaProjects\group-study-platform\backend\src\main\java\com\grouplearning\backend\config\WebSocketConfig.java:47: public void registerStompEndpoints(
+C:\Users\PC\IdeaProjects\group-study-platform\backend\src\main\java\com\grouplearning\backend\config\WebSocketConfig.java:51: .addEndpoint("/ws")
+C:\Users\PC\IdeaProjects\group-study-platform\backend\src\main\java\com\grouplearning\backend\config\WebSocketConfig.java:61: registry.enableSimpleBroker(
+C:\Users\PC\IdeaProjects\group-study-platform\backend\src\main\java\com\grouplearning\backend\config\WebSocketConfig.java:65: registry.setApplicationDestinationPrefixes(

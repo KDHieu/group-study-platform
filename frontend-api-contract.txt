@@ -1,0 +1,26 @@
+===== FRONTEND API CONTRACT =====
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\chatSocket.ts:16: + "/ws";
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\chatSocket.ts:27: brokerURL: getWebSocketUrl(),
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\friendsApi.ts:19: "/users/search",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\friendsApi.ts:35: "/friends",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\friendsApi.ts:45: "/friends/requests/incoming",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\friendsApi.ts:55: "/friends/requests/outgoing",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\groups.ts:15: "/groups",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\groups.ts:42: "/groups",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\profileApi.ts:10: "/users/me/profile",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\profileApi.ts:32: "/users/me/profile",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\profileApi.ts:48: "/users/me/avatar",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\api\videoApi.ts:16: `/groups/${groupId}/video/token`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\components\chat\GroupChat.tsx:198: `/app/groups/${groupId}/typing`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\components\chat\GroupChat.tsx:260: `/app/groups/${groupId}/messages`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\components\chat\GroupChat.tsx:424: `/topic/groups/${groupId}/messages`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\components\chat\GroupChat.tsx:450: `/topic/groups/${groupId}/typing`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\components\chat\GroupChat.tsx:498: `/app/groups/${groupId}/typing`,
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\config\navigation.ts:24: path: "/groups",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\config\navigation.ts:34: path: "/friends",
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\pages\DashboardPage.tsx:98: <Button render={<Link to="/groups" />}>
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\pages\DashboardPage.tsx:105: render={<Link to="/groups" />}
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\pages\GroupDetailPage.tsx:157: navigate("/groups")
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\App.tsx:43: path="/groups"
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\App.tsx:48: path="/groups/:groupId"
+C:\Users\PC\IdeaProjects\group-study-platform\frontend\src\App.tsx:58: path="/friends"
