@@ -1,9 +1,14 @@
+export type GroupVisibility =
+    | "PUBLIC"
+    | "PRIVATE"
+
 export interface StudyGroup {
     id: string
     name: string
     description: string | null
     ownerId: string
     ownerUsername: string
+    visibility: GroupVisibility
     createdAt: string
 }
 
@@ -22,6 +27,7 @@ export interface GroupPageResponse {
 export interface CreateGroupRequest {
     name: string
     description?: string
+    visibility: GroupVisibility
 }
 
 export type GroupMemberRole =

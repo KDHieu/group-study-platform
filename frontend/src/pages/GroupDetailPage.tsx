@@ -1,18 +1,38 @@
-import { Trash2, UserMinus, UserPlus, Users } from "lucide-react"
-import { useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { getApiErrorMessage } from "@/api/error"
-import GroupChat from "@/components/chat/GroupChat"
-import StudyVideoRoom from "@/components/video/StudyVideoRoom"
-
+import axios from "axios"
 import {
+    Check,
+    Clock3,
+    Globe2,
+    Lock,
+    Trash2,
+    UserMinus,
+    UserPlus,
+    Users,
+    X,
+} from "lucide-react"
+import {
+    useEffect,
+    useState,
+} from "react"
+import {
+    useNavigate,
+    useParams,
+} from "react-router-dom"
+
+import { getApiErrorMessage } from "@/api/error"
+import {
+    approveJoinRequest,
     deleteGroup,
     getGroupById,
     getGroupMembers,
+    getMyJoinRequest,
+    getPendingJoinRequests,
     joinGroup,
     leaveGroup,
+    rejectJoinRequest,
 } from "@/api/groups"
 import { useAuth } from "@/auth/useAuth"
+import GroupChat from "@/components/chat/GroupChat"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -21,54 +41,208 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import StudyVideoRoom from "@/components/video/StudyVideoRoom"
 import type {
     GroupMember,
     StudyGroup,
 } from "@/types/group"
+import type {
+    GroupJoinRequest,
+} from "@/types/groupJoinRequest"
 
 export default function GroupDetailPage() {
-    const { groupId } = useParams()
-    const navigate = useNavigate()
-    const { user } = useAuth()
+    const { groupId } =
+        useParams()
+
+    const navigate =
+        useNavigate()
+
+    const { user } =
+        useAuth()
 
     const [group, setGroup] =
-        useState<StudyGroup | null>(null)
+        useState<StudyGroup | null>(
+            null,
+        )
 
     const [members, setMembers] =
         useState<GroupMember[]>([])
 
-    const [loading, setLoading] = useState(true)
-    const [actionLoading, setActionLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [refreshKey, setRefreshKey] = useState(0)
+    const [
+        myJoinRequest,
+        setMyJoinRequest,
+    ] =
+        useState<GroupJoinRequest | null>(
+            null,
+        )
+
+    const [
+        pendingRequests,
+        setPendingRequests,
+    ] =
+        useState<GroupJoinRequest[]>([])
+
+    const [loading, setLoading] =
+        useState(Boolean(groupId))
+
+    const [
+        actionLoading,
+        setActionLoading,
+    ] = useState(false)
+
+    const [
+        requestActionId,
+        setRequestActionId,
+    ] =
+        useState<string | null>(
+            null,
+        )
+
+    const [error, setError] =
+        useState<string | null>(
+            null,
+        )
+
+    const [
+        refreshKey,
+        setRefreshKey,
+    ] = useState(0)
 
     useEffect(() => {
         if (!groupId) {
             return
         }
 
-        const currentGroupId = groupId
+        const currentGroupId =
+            groupId
 
         async function loadGroup() {
             try {
                 setLoading(true)
                 setError(null)
 
-                const [
-                    groupResponse,
-                    membersResponse,
-                ] = await Promise.all([
-                    getGroupById(currentGroupId),
-                    getGroupMembers(currentGroupId),
-                ])
+                setGroup(null)
+                setMembers([])
+                setMyJoinRequest(null)
+                setPendingRequests([])
 
-                setGroup(groupResponse)
-                setMembers(membersResponse)
+                /*
+                 * Step 1:
+                 * Basic metadata is available even
+                 * to a PRIVATE-group outsider.
+                 */
+                const groupResponse =
+                    await getGroupById(
+                        currentGroupId,
+                    )
+
+                setGroup(
+                    groupResponse,
+                )
+
+                /*
+                 * Step 2:
+                 * Member access is stricter.
+                 *
+                 * PRIVATE outsider receives 403 here,
+                 * but that must not make the whole
+                 * group page fail.
+                 */
+                let hasPrivateContentAccess =
+                    true
+
+                try {
+                    const membersResponse =
+                        await getGroupMembers(
+                            currentGroupId,
+                        )
+
+                    setMembers(
+                        membersResponse,
+                    )
+                } catch (error) {
+                    const isPrivateAccessDenied =
+                        groupResponse.visibility ===
+                        "PRIVATE" &&
+                        axios.isAxiosError(
+                            error,
+                        ) &&
+                        error.response
+                            ?.status === 403
+
+                    if (
+                        isPrivateAccessDenied
+                    ) {
+                        hasPrivateContentAccess =
+                            false
+
+                        setMembers([])
+                    } else {
+                        throw error
+                    }
+                }
+
+                const currentUserIsOwner =
+                    groupResponse.ownerId ===
+                    user?.id
+
+                /*
+                 * Step 3:
+                 * PRIVATE outsider checks their own
+                 * request status.
+                 */
+                if (
+                    groupResponse.visibility ===
+                    "PRIVATE" &&
+                    !hasPrivateContentAccess
+                ) {
+                    const joinRequest =
+                        await getMyJoinRequest(
+                            currentGroupId,
+                        )
+
+                    setMyJoinRequest(
+                        joinRequest,
+                    )
+                }
+
+                /*
+                 * Step 4:
+                 * PRIVATE owner loads pending requests.
+                 */
+                if (
+                    groupResponse.visibility ===
+                    "PRIVATE" &&
+                    currentUserIsOwner
+                ) {
+                    const requests =
+                        await getPendingJoinRequests(
+                            currentGroupId,
+                        )
+
+                    setPendingRequests(
+                        requests,
+                    )
+                }
             } catch (error) {
+                if (
+                    axios.isAxiosError(
+                        error,
+                    ) &&
+                    error.response
+                        ?.status === 404
+                ) {
+                    setError(
+                        "Study group not found.",
+                    )
+
+                    return
+                }
+
                 setError(
                     getApiErrorMessage(
                         error,
-                        "Could not join this study group.",
+                        "Could not load this study group.",
                     ),
                 )
             } finally {
@@ -77,14 +251,21 @@ export default function GroupDetailPage() {
         }
 
         void loadGroup()
-    }, [groupId, refreshKey])
+    }, [
+        groupId,
+        refreshKey,
+        user?.id,
+    ])
 
     const isOwner =
-        group?.ownerId === user?.id
+        group?.ownerId ===
+        user?.id
 
     const isMember =
         members.some(
-            (member) => member.userId === user?.id,
+            (member) =>
+                member.userId ===
+                user?.id,
         )
 
     async function handleJoin() {
@@ -96,14 +277,22 @@ export default function GroupDetailPage() {
             setActionLoading(true)
             setError(null)
 
-            await joinGroup(groupId)
+            await joinGroup(
+                groupId,
+            )
 
-            setRefreshKey((current) => current + 1)
+            setRefreshKey(
+                (current) =>
+                    current + 1,
+            )
         } catch (error) {
             setError(
                 getApiErrorMessage(
                     error,
-                    "Could not join this study group.",
+                    group?.visibility ===
+                    "PRIVATE"
+                        ? "Could not send the join request."
+                        : "Could not join this study group.",
                 ),
             )
         } finally {
@@ -112,7 +301,10 @@ export default function GroupDetailPage() {
     }
 
     async function handleLeave() {
-        if (!groupId) {
+        if (
+            !groupId ||
+            !group
+        ) {
             return
         }
 
@@ -120,14 +312,36 @@ export default function GroupDetailPage() {
             setActionLoading(true)
             setError(null)
 
-            await leaveGroup(groupId)
+            await leaveGroup(
+                groupId,
+            )
 
-            setRefreshKey((current) => current + 1)
+            if (
+                group.visibility ===
+                "PRIVATE"
+            ) {
+                /*
+                 * The user may still view metadata
+                 * after leaving, but refreshing makes
+                 * the access state immediately clear.
+                 */
+                setRefreshKey(
+                    (current) =>
+                        current + 1,
+                )
+
+                return
+            }
+
+            setRefreshKey(
+                (current) =>
+                    current + 1,
+            )
         } catch (error) {
             setError(
                 getApiErrorMessage(
                     error,
-                    "Could not join this study group.",
+                    "Could not leave this study group.",
                 ),
             )
         } finally {
@@ -140,9 +354,10 @@ export default function GroupDetailPage() {
             return
         }
 
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this study group?",
-        )
+        const confirmed =
+            window.confirm(
+                "Are you sure you want to delete this study group?",
+            )
 
         if (!confirmed) {
             return
@@ -152,19 +367,193 @@ export default function GroupDetailPage() {
             setActionLoading(true)
             setError(null)
 
-            await deleteGroup(groupId)
+            await deleteGroup(
+                groupId,
+            )
 
-            navigate("/groups")
+            navigate(
+                "/groups",
+            )
         } catch (error) {
             setError(
                 getApiErrorMessage(
                     error,
-                    "Could not join this study group.",
+                    "Could not delete this study group.",
                 ),
             )
         } finally {
             setActionLoading(false)
         }
+    }
+
+    async function handleApprove(
+        requestId: string,
+    ) {
+        if (!groupId) {
+            return
+        }
+
+        try {
+            setRequestActionId(
+                requestId,
+            )
+
+            setError(null)
+
+            await approveJoinRequest(
+                groupId,
+                requestId,
+            )
+
+            setRefreshKey(
+                (current) =>
+                    current + 1,
+            )
+        } catch (error) {
+            setError(
+                getApiErrorMessage(
+                    error,
+                    "Could not approve this join request.",
+                ),
+            )
+        } finally {
+            setRequestActionId(
+                null,
+            )
+        }
+    }
+
+    async function handleReject(
+        requestId: string,
+    ) {
+        if (!groupId) {
+            return
+        }
+
+        try {
+            setRequestActionId(
+                requestId,
+            )
+
+            setError(null)
+
+            await rejectJoinRequest(
+                groupId,
+                requestId,
+            )
+
+            setRefreshKey(
+                (current) =>
+                    current + 1,
+            )
+        } catch (error) {
+            setError(
+                getApiErrorMessage(
+                    error,
+                    "Could not reject this join request.",
+                ),
+            )
+        } finally {
+            setRequestActionId(
+                null,
+            )
+        }
+    }
+
+    function renderMembershipAction() {
+        if (!group) {
+            return null
+        }
+
+        if (isOwner) {
+            return (
+                <Button
+                    variant="destructive"
+                    disabled={
+                        actionLoading
+                    }
+                    onClick={
+                        handleDelete
+                    }
+                >
+                    <Trash2 />
+                    Delete group
+                </Button>
+            )
+        }
+
+        if (isMember) {
+            return (
+                <Button
+                    variant="outline"
+                    disabled={
+                        actionLoading
+                    }
+                    onClick={
+                        handleLeave
+                    }
+                >
+                    <UserMinus />
+                    Leave group
+                </Button>
+            )
+        }
+
+        if (
+            group.visibility ===
+            "PUBLIC"
+        ) {
+            return (
+                <Button
+                    disabled={
+                        actionLoading
+                    }
+                    onClick={
+                        handleJoin
+                    }
+                >
+                    <UserPlus />
+
+                    {actionLoading
+                        ? "Joining..."
+                        : "Join group"}
+                </Button>
+            )
+        }
+
+        if (
+            myJoinRequest?.status ===
+            "PENDING"
+        ) {
+            return (
+                <Button
+                    disabled
+                    variant="outline"
+                >
+                    <Clock3 />
+                    Request pending
+                </Button>
+            )
+        }
+
+        return (
+            <Button
+                disabled={
+                    actionLoading
+                }
+                onClick={
+                    handleJoin
+                }
+            >
+                <UserPlus />
+
+                {actionLoading
+                    ? "Sending..."
+                    : myJoinRequest
+                        ? "Request again"
+                        : "Request to join"}
+            </Button>
+        )
     }
 
     if (loading) {
@@ -177,19 +566,65 @@ export default function GroupDetailPage() {
 
     if (!group) {
         return (
-            <p className="text-muted-foreground">
-                Study group not found.
-            </p>
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        Study group
+                    </CardTitle>
+
+                    <CardDescription>
+                        {error ||
+                            "Study group not found."}
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                    <Button
+                        variant="outline"
+                        onClick={() =>
+                            navigate(
+                                "/groups",
+                            )
+                        }
+                    >
+                        Back to groups
+                    </Button>
+                </CardContent>
+            </Card>
         )
     }
+
+    const canAccessPrivateContent =
+        group.visibility ===
+        "PUBLIC" ||
+        isMember
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h1 className="text-3xl font-semibold tracking-tight">
-                        {group.name}
-                    </h1>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-3xl font-semibold tracking-tight">
+                            {
+                                group.name
+                            }
+                        </h1>
+
+                        <span className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground">
+                            {group.visibility ===
+                            "PRIVATE" ? (
+                                <>
+                                    <Lock className="h-3 w-3" />
+                                    Private
+                                </>
+                            ) : (
+                                <>
+                                    <Globe2 className="h-3 w-3" />
+                                    Public
+                                </>
+                            )}
+                        </span>
+                    </div>
 
                     <p className="mt-2 text-muted-foreground">
                         {group.description ||
@@ -197,38 +632,17 @@ export default function GroupDetailPage() {
                     </p>
 
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Created by {group.ownerUsername}
+                        Created by{" "}
+                        {
+                            group.ownerUsername
+                        }
                     </p>
                 </div>
 
                 <div className="flex gap-2">
-                    {isOwner ? (
-                        <Button
-                            variant="destructive"
-                            disabled={actionLoading}
-                            onClick={handleDelete}
-                        >
-                            <Trash2 />
-                            Delete group
-                        </Button>
-                    ) : isMember ? (
-                        <Button
-                            variant="outline"
-                            disabled={actionLoading}
-                            onClick={handleLeave}
-                        >
-                            <UserMinus />
-                            Leave group
-                        </Button>
-                    ) : (
-                        <Button
-                            disabled={actionLoading}
-                            onClick={handleJoin}
-                        >
-                            <UserPlus />
-                            Join group
-                        </Button>
-                    )}
+                    {
+                        renderMembershipAction()
+                    }
                 </div>
             </div>
 
@@ -238,51 +652,200 @@ export default function GroupDetailPage() {
                 </p>
             )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        Members
-                    </CardTitle>
+            {group.visibility ===
+                "PRIVATE" &&
+                !isMember &&
+                !isOwner && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Lock className="h-5 w-5" />
+                                Private group
+                            </CardTitle>
 
-                    <CardDescription>
-                        {members.length} member
-                        {members.length === 1 ? "" : "s"}
-                    </CardDescription>
-                </CardHeader>
+                            <CardDescription>
+                                Group members,
+                                chat and study
+                                room are available
+                                only after your
+                                join request has
+                                been approved.
+                            </CardDescription>
+                        </CardHeader>
 
-                <CardContent className="space-y-3">
-                    {members.map((member) => (
-                        <div
-                            key={member.userId}
-                            className="flex items-center justify-between border-b pb-3 last:border-0"
-                        >
-                            <div>
-                                <p className="font-medium">
-                                    {member.username}
-                                </p>
-
+                        {myJoinRequest && (
+                            <CardContent>
                                 <p className="text-sm text-muted-foreground">
-                                    {member.role}
+                                    Request
+                                    status:{" "}
+                                    <span className="font-medium text-foreground">
+                                        {
+                                            myJoinRequest.status
+                                        }
+                                    </span>
                                 </p>
-                            </div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+                            </CardContent>
+                        )}
+                    </Card>
+                )}
+
+            {isOwner &&
+                group.visibility ===
+                "PRIVATE" && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                Join requests
+                            </CardTitle>
+
+                            <CardDescription>
+                                Review users
+                                requesting access
+                                to this private
+                                group.
+                            </CardDescription>
+                        </CardHeader>
+
+                        <CardContent className="space-y-3">
+                            {pendingRequests.length ===
+                            0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    No pending
+                                    join requests.
+                                </p>
+                            ) : (
+                                pendingRequests.map(
+                                    (
+                                        request,
+                                    ) => (
+                                        <div
+                                            key={
+                                                request.id
+                                            }
+                                            className="flex flex-col gap-3 border-b pb-3 last:border-0 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div>
+                                                <p className="font-medium">
+                                                    {
+                                                        request.username
+                                                    }
+                                                </p>
+
+                                                <p className="text-sm text-muted-foreground">
+                                                    Pending
+                                                    approval
+                                                </p>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    disabled={
+                                                        requestActionId ===
+                                                        request.id
+                                                    }
+                                                    onClick={() =>
+                                                        void handleApprove(
+                                                            request.id,
+                                                        )
+                                                    }
+                                                >
+                                                    <Check />
+                                                    Approve
+                                                </Button>
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={
+                                                        requestActionId ===
+                                                        request.id
+                                                    }
+                                                    onClick={() =>
+                                                        void handleReject(
+                                                            request.id,
+                                                        )
+                                                    }
+                                                >
+                                                    <X />
+                                                    Reject
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ),
+                                )
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+            {canAccessPrivateContent && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5" />
+                            Members
+                        </CardTitle>
+
+                        <CardDescription>
+                            {members.length}{" "}
+                            member
+                            {members.length ===
+                            1
+                                ? ""
+                                : "s"}
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                        {members.map(
+                            (member) => (
+                                <div
+                                    key={
+                                        member.userId
+                                    }
+                                    className="flex items-center justify-between border-b pb-3 last:border-0"
+                                >
+                                    <div>
+                                        <p className="font-medium">
+                                            {
+                                                member.username
+                                            }
+                                        </p>
+
+                                        <p className="text-sm text-muted-foreground">
+                                            {
+                                                member.role
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            ),
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {isMember && (
                 <StudyVideoRoom
-                    groupId={group.id}
+                    groupId={
+                        group.id
+                    }
                 />
             )}
 
-            {isMember && user?.id ? (
+            {isMember &&
+            user?.id ? (
                 <GroupChat
-                    groupId={group.id}
-                    currentUserId={user.id}
+                    groupId={
+                        group.id
+                    }
+                    currentUserId={
+                        user.id
+                    }
                 />
-            ) : (
+            ) : group.visibility ===
+            "PUBLIC" ? (
                 <Card>
                     <CardHeader>
                         <CardTitle>
@@ -290,12 +853,13 @@ export default function GroupDetailPage() {
                         </CardTitle>
 
                         <CardDescription>
-                            Join this study group to
-                            access the group chat.
+                            Join this study
+                            group to access
+                            the group chat.
                         </CardDescription>
                     </CardHeader>
                 </Card>
-            )}
+            ) : null}
         </div>
     )
 }

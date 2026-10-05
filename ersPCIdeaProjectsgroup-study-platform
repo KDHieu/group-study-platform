@@ -1,0 +1,24 @@
+ .../backend/controller/StudyGroupController.java   | 407 [32m++++++[m[31m-----[m
+ .../backend/dto/request/CreateGroupRequest.java    |  41 [32m+[m[31m-[m
+ .../dto/response/GroupJoinRequestResponse.java     |  21 [32m+[m[31m-[m
+ .../backend/dto/response/GroupResponse.java        |  67 [32m+[m[31m-[m
+ .../backend/entity/GroupJoinRequest.java           | 120 [32m+++[m[31m-[m
+ .../backend/entity/GroupJoinRequestStatus.java     |   7 [32m+[m[31m-[m
+ .../backend/entity/GroupVisibility.java            |   6 [32m+[m[31m-[m
+ .../grouplearning/backend/entity/StudyGroup.java   |  43 [32m+[m[31m-[m
+ .../repository/GroupJoinRequestRepository.java     |  55 [32m+[m[31m-[m
+ .../backend/repository/GroupMemberRepository.java  |  30 [32m+[m[31m-[m
+ .../backend/repository/StudyGroupRepository.java   |  66 [32m+[m[31m-[m
+ .../backend/service/StudyGroupService.java         | 537 [32m++++++++++++[m[31m--[m
+ .../db/migration/V8__add_group_visibility.sql      |   6 [32m+[m
+ .../migration/V9__create_group_join_requests.sql   |  42 [32m++[m
+ .../backend/service/StudyGroupJoinRequestTest.java | 607 [32m+++++++++++++++[m[31m-[m
+ .../backend/service/StudyGroupMyGroupsTest.java    | 326 [32m++++++++[m[31m-[m
+ .../service/StudyGroupPrivateAccessTest.java       | 392 [32m+++++++++[m[31m-[m
+ .../backend/service/StudyGroupServiceTest.java     | 753 [32m++++++++++++++++[m[31m----[m
+ frontend/src/api/groups.ts                         | 111 [32m++[m[31m-[m
+ .../src/components/groups/CreateGroupDialog.tsx    | 176 [32m++++[m[31m-[m
+ frontend/src/pages/GroupDetailPage.tsx             | 788 [32m++++++++++++++++++[m[31m---[m
+ frontend/src/pages/GroupsPage.tsx                  | 340 [32m+++++++[m[31m--[m
+ frontend/src/types/group.ts                        |   6 [32m+[m
+ 23 files changed, 4339 insertions(+), 608 deletions(-)

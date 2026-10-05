@@ -3,14 +3,18 @@ package com.grouplearning.backend.service;
 import com.grouplearning.backend.dto.request.CreateGroupRequest;
 import com.grouplearning.backend.dto.response.GroupMemberResponse;
 import com.grouplearning.backend.dto.response.GroupResponse;
+import com.grouplearning.backend.entity.GroupJoinRequest;
+import com.grouplearning.backend.entity.GroupJoinRequestStatus;
 import com.grouplearning.backend.entity.GroupMember;
 import com.grouplearning.backend.entity.GroupMemberRole;
+import com.grouplearning.backend.entity.GroupVisibility;
 import com.grouplearning.backend.entity.StudyGroup;
 import com.grouplearning.backend.entity.User;
 import com.grouplearning.backend.exception.ConflictException;
 import com.grouplearning.backend.exception.ForbiddenException;
 import com.grouplearning.backend.exception.NotFoundException;
 import com.grouplearning.backend.exception.UnauthorizedException;
+import com.grouplearning.backend.repository.GroupJoinRequestRepository;
 import com.grouplearning.backend.repository.GroupMemberRepository;
 import com.grouplearning.backend.repository.StudyGroupRepository;
 import com.grouplearning.backend.repository.UserRepository;
@@ -32,7 +36,6 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,33 +53,47 @@ class StudyGroupServiceTest {
     @Mock
     private GroupMemberRepository groupMemberRepository;
 
+    @Mock
+    private GroupJoinRequestRepository groupJoinRequestRepository;
+
     private StudyGroupService studyGroupService;
 
     @BeforeEach
     void setUp() {
-        studyGroupService = new StudyGroupService(
-                studyGroupRepository,
-                userRepository,
-                groupMemberRepository
-        );
+        studyGroupService =
+                new StudyGroupService(
+                        studyGroupRepository,
+                        userRepository,
+                        groupMemberRepository,
+                        groupJoinRequestRepository
+                );
     }
 
     @Test
-    void createGroup_shouldCreateGroupForAuthenticatedUser() {
-        UUID userId = UUID.randomUUID();
+    void createGroup_shouldCreatePublicGroupForAuthenticatedUser() {
+        UUID userId =
+                UUID.randomUUID();
 
-        User owner = mock(User.class);
+        User owner =
+                mock(User.class);
 
-        when(owner.getId()).thenReturn(userId);
-        when(owner.getUsername()).thenReturn("hieu");
+        when(owner.getId())
+                .thenReturn(userId);
+
+        when(owner.getUsername())
+                .thenReturn("hieu");
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(owner));
 
-        when(studyGroupRepository.save(any(StudyGroup.class)))
-                .thenAnswer(invocation ->
+        when(
+                studyGroupRepository.save(
+                        any(StudyGroup.class)
+                )
+        ).thenAnswer(
+                invocation ->
                         invocation.getArgument(0)
-                );
+        );
 
         CreateGroupRequest request =
                 new CreateGroupRequest(
@@ -110,13 +127,20 @@ class StudyGroupServiceTest {
                 response.ownerUsername()
         );
 
+        assertEquals(
+                GroupVisibility.PUBLIC,
+                response.visibility()
+        );
+
         ArgumentCaptor<StudyGroup> groupCaptor =
                 ArgumentCaptor.forClass(
                         StudyGroup.class
                 );
 
         verify(studyGroupRepository)
-                .save(groupCaptor.capture());
+                .save(
+                        groupCaptor.capture()
+                );
 
         StudyGroup savedGroup =
                 groupCaptor.getValue();
@@ -131,13 +155,20 @@ class StudyGroupServiceTest {
                 savedGroup.getOwner()
         );
 
+        assertEquals(
+                GroupVisibility.PUBLIC,
+                savedGroup.getVisibility()
+        );
+
         ArgumentCaptor<GroupMember> memberCaptor =
                 ArgumentCaptor.forClass(
                         GroupMember.class
                 );
 
         verify(groupMemberRepository)
-                .save(memberCaptor.capture());
+                .save(
+                        memberCaptor.capture()
+                );
 
         GroupMember membership =
                 memberCaptor.getValue();
@@ -159,8 +190,71 @@ class StudyGroupServiceTest {
     }
 
     @Test
+    void createGroup_shouldCreatePrivateGroupWhenRequested() {
+        UUID userId =
+                UUID.randomUUID();
+
+        User owner =
+                mock(User.class);
+
+        when(owner.getId())
+                .thenReturn(userId);
+
+        when(owner.getUsername())
+                .thenReturn("hieu");
+
+        when(userRepository.findById(userId))
+                .thenReturn(Optional.of(owner));
+
+        when(
+                studyGroupRepository.save(
+                        any(StudyGroup.class)
+                )
+        ).thenAnswer(
+                invocation ->
+                        invocation.getArgument(0)
+        );
+
+        CreateGroupRequest request =
+                new CreateGroupRequest(
+                        "Private AI Group",
+                        "Private study group",
+                        GroupVisibility.PRIVATE
+                );
+
+        GroupResponse response =
+                studyGroupService.createGroup(
+                        userId,
+                        request
+                );
+
+        assertEquals(
+                GroupVisibility.PRIVATE,
+                response.visibility()
+        );
+
+        ArgumentCaptor<StudyGroup> groupCaptor =
+                ArgumentCaptor.forClass(
+                        StudyGroup.class
+                );
+
+        verify(studyGroupRepository)
+                .save(
+                        groupCaptor.capture()
+                );
+
+        assertEquals(
+                GroupVisibility.PRIVATE,
+                groupCaptor
+                        .getValue()
+                        .getVisibility()
+        );
+    }
+
+    @Test
     void createGroup_shouldThrowUnauthorizedWhenUserDoesNotExist() {
-        UUID userId = UUID.randomUUID();
+        UUID userId =
+                UUID.randomUUID();
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
@@ -173,10 +267,11 @@ class StudyGroupServiceTest {
 
         assertThrows(
                 UnauthorizedException.class,
-                () -> studyGroupService.createGroup(
-                        userId,
-                        request
-                )
+                () ->
+                        studyGroupService.createGroup(
+                                userId,
+                                request
+                        )
         );
 
         verify(
@@ -186,18 +281,26 @@ class StudyGroupServiceTest {
     }
 
     @Test
-    void getGroups_shouldSearchByNameWhenSearchIsProvided() {
+    void getGroups_shouldSearchOnlyPublicGroupsWhenSearchIsProvided() {
         Pageable pageable =
                 PageRequest.of(
                         0,
                         10
                 );
 
-        User owner = mock(User.class);
-        StudyGroup group = mock(StudyGroup.class);
+        User owner =
+                mock(User.class);
+
+        StudyGroup group =
+                mock(StudyGroup.class);
 
         when(group.getOwner())
                 .thenReturn(owner);
+
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PUBLIC
+                );
 
         Page<StudyGroup> page =
                 new PageImpl<>(
@@ -208,7 +311,8 @@ class StudyGroupServiceTest {
 
         when(
                 studyGroupRepository
-                        .findByNameContainingIgnoreCase(
+                        .findByVisibilityAndNameContainingIgnoreCase(
+                                GroupVisibility.PUBLIC,
                                 "architecture",
                                 pageable
                         )
@@ -226,7 +330,8 @@ class StudyGroupServiceTest {
         );
 
         verify(studyGroupRepository)
-                .findByNameContainingIgnoreCase(
+                .findByVisibilityAndNameContainingIgnoreCase(
+                        GroupVisibility.PUBLIC,
                         "architecture",
                         pageable
                 );
@@ -234,13 +339,14 @@ class StudyGroupServiceTest {
         verify(
                 studyGroupRepository,
                 never()
-        ).findAll(
+        ).findByVisibility(
+                any(GroupVisibility.class),
                 any(Pageable.class)
         );
     }
 
     @Test
-    void getGroups_shouldReturnAllGroupsWhenSearchIsBlank() {
+    void getGroups_shouldReturnOnlyPublicGroupsWhenSearchIsBlank() {
         Pageable pageable =
                 PageRequest.of(
                         0,
@@ -255,7 +361,11 @@ class StudyGroupServiceTest {
                 );
 
         when(
-                studyGroupRepository.findAll(pageable)
+                studyGroupRepository
+                        .findByVisibility(
+                                GroupVisibility.PUBLIC,
+                                pageable
+                        )
         ).thenReturn(page);
 
         Page<GroupResponse> result =
@@ -270,24 +380,34 @@ class StudyGroupServiceTest {
         );
 
         verify(studyGroupRepository)
-                .findAll(pageable);
+                .findByVisibility(
+                        GroupVisibility.PUBLIC,
+                        pageable
+                );
 
         verify(
                 studyGroupRepository,
                 never()
-        ).findByNameContainingIgnoreCase(
-                anyString(),
+        ).findByVisibilityAndNameContainingIgnoreCase(
+                any(GroupVisibility.class),
+                any(String.class),
                 any(Pageable.class)
         );
     }
 
     @Test
     void getGroupById_shouldReturnGroupWhenGroupExists() {
-        UUID groupId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        User owner = mock(User.class);
-        StudyGroup group = mock(StudyGroup.class);
+        UUID ownerId =
+                UUID.randomUUID();
+
+        User owner =
+                mock(User.class);
+
+        StudyGroup group =
+                mock(StudyGroup.class);
 
         when(owner.getId())
                 .thenReturn(ownerId);
@@ -302,18 +422,30 @@ class StudyGroupServiceTest {
                 .thenReturn("AI Study Group");
 
         when(group.getDescription())
-                .thenReturn("Learn AI together");
+                .thenReturn(
+                        "Learn AI together"
+                );
 
         when(group.getOwner())
                 .thenReturn(owner);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PUBLIC
+                );
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         GroupResponse response =
-                studyGroupService.getGroupById(
-                        groupId
-                );
+                studyGroupService
+                        .getGroupById(
+                                groupId
+                        );
 
         assertEquals(
                 groupId,
@@ -334,29 +466,48 @@ class StudyGroupServiceTest {
                 "hieu",
                 response.ownerUsername()
         );
+
+        assertEquals(
+                GroupVisibility.PUBLIC,
+                response.visibility()
+        );
     }
 
     @Test
     void getGroupById_shouldThrowNotFoundWhenGroupDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.empty());
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService
-                        .getGroupById(groupId)
+                () ->
+                        studyGroupService
+                                .getGroupById(
+                                        groupId
+                                )
         );
     }
 
     @Test
     void deleteGroup_shouldDeleteWhenCurrentUserIsOwner() {
-        UUID groupId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        User owner = mock(User.class);
-        StudyGroup group = mock(StudyGroup.class);
+        UUID ownerId =
+                UUID.randomUUID();
+
+        User owner =
+                mock(User.class);
+
+        StudyGroup group =
+                mock(StudyGroup.class);
 
         when(owner.getId())
                 .thenReturn(ownerId);
@@ -364,8 +515,12 @@ class StudyGroupServiceTest {
         when(group.getOwner())
                 .thenReturn(owner);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         studyGroupService.deleteGroup(
                 groupId,
@@ -378,12 +533,20 @@ class StudyGroupServiceTest {
 
     @Test
     void deleteGroup_shouldThrowForbiddenWhenCurrentUserIsNotOwner() {
-        UUID groupId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
-        UUID anotherUserId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        User owner = mock(User.class);
-        StudyGroup group = mock(StudyGroup.class);
+        UUID ownerId =
+                UUID.randomUUID();
+
+        UUID anotherUserId =
+                UUID.randomUUID();
+
+        User owner =
+                mock(User.class);
+
+        StudyGroup group =
+                mock(StudyGroup.class);
 
         when(owner.getId())
                 .thenReturn(ownerId);
@@ -391,15 +554,21 @@ class StudyGroupServiceTest {
         when(group.getOwner())
                 .thenReturn(owner);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         assertThrows(
                 ForbiddenException.class,
-                () -> studyGroupService.deleteGroup(
-                        groupId,
-                        anotherUserId
-                )
+                () ->
+                        studyGroupService
+                                .deleteGroup(
+                                        groupId,
+                                        anotherUserId
+                                )
         );
 
         verify(
@@ -410,18 +579,27 @@ class StudyGroupServiceTest {
 
     @Test
     void deleteGroup_shouldThrowNotFoundWhenGroupDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.empty());
+        UUID userId =
+                UUID.randomUUID();
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService.deleteGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .deleteGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
@@ -431,9 +609,12 @@ class StudyGroupServiceTest {
     }
 
     @Test
-    void joinGroup_shouldCreateMemberMembership() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+    void joinGroup_shouldCreateMemberMembershipForPublicGroup() {
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
@@ -441,11 +622,20 @@ class StudyGroupServiceTest {
         User user =
                 mock(User.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(
+                userRepository.findById(
+                        userId
+                )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
         when(
                 groupMemberRepository
@@ -454,6 +644,11 @@ class StudyGroupServiceTest {
                                 userId
                         )
         ).thenReturn(false);
+
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PUBLIC
+                );
 
         studyGroupService.joinGroup(
                 groupId,
@@ -466,7 +661,9 @@ class StudyGroupServiceTest {
                 );
 
         verify(groupMemberRepository)
-                .save(captor.capture());
+                .save(
+                        captor.capture()
+                );
 
         GroupMember membership =
                 captor.getValue();
@@ -485,12 +682,20 @@ class StudyGroupServiceTest {
                 GroupMemberRole.MEMBER,
                 membership.getRole()
         );
+
+        verify(
+                groupJoinRequestRepository,
+                never()
+        ).save(any());
     }
 
     @Test
-    void joinGroup_shouldThrowConflictWhenAlreadyMember() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+    void joinGroup_shouldCreatePendingRequestForPrivateGroup() {
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
@@ -498,11 +703,198 @@ class StudyGroupServiceTest {
         User user =
                 mock(User.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(
+                userRepository.findById(
+                        userId
+                )
+        ).thenReturn(
+                Optional.of(user)
+        );
+
+        when(
+                groupMemberRepository
+                        .existsByGroup_IdAndUser_Id(
+                                groupId,
+                                userId
+                        )
+        ).thenReturn(false);
+
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PRIVATE
+                );
+
+        when(
+                groupJoinRequestRepository
+                        .findByGroup_IdAndRequester_Id(
+                                groupId,
+                                userId
+                        )
+        ).thenReturn(
+                Optional.empty()
+        );
+
+        studyGroupService.joinGroup(
+                groupId,
+                userId
+        );
+
+        ArgumentCaptor<GroupJoinRequest> captor =
+                ArgumentCaptor.forClass(
+                        GroupJoinRequest.class
+                );
+
+        verify(groupJoinRequestRepository)
+                .save(
+                        captor.capture()
+                );
+
+        GroupJoinRequest joinRequest =
+                captor.getValue();
+
+        assertEquals(
+                group,
+                joinRequest.getGroup()
+        );
+
+        assertEquals(
+                user,
+                joinRequest.getRequester()
+        );
+
+        assertEquals(
+                GroupJoinRequestStatus.PENDING,
+                joinRequest.getStatus()
+        );
+
+        verify(
+                groupMemberRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void joinGroup_shouldThrowConflictWhenPrivateRequestAlreadyPending() {
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
+
+        StudyGroup group =
+                mock(StudyGroup.class);
+
+        User user =
+                mock(User.class);
+
+        GroupJoinRequest joinRequest =
+                mock(GroupJoinRequest.class);
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
+
+        when(
+                userRepository.findById(
+                        userId
+                )
+        ).thenReturn(
+                Optional.of(user)
+        );
+
+        when(
+                groupMemberRepository
+                        .existsByGroup_IdAndUser_Id(
+                                groupId,
+                                userId
+                        )
+        ).thenReturn(false);
+
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PRIVATE
+                );
+
+        when(
+                groupJoinRequestRepository
+                        .findByGroup_IdAndRequester_Id(
+                                groupId,
+                                userId
+                        )
+        ).thenReturn(
+                Optional.of(joinRequest)
+        );
+
+        when(joinRequest.getStatus())
+                .thenReturn(
+                        GroupJoinRequestStatus.PENDING
+                );
+
+        ConflictException exception =
+                assertThrows(
+                        ConflictException.class,
+                        () ->
+                                studyGroupService
+                                        .joinGroup(
+                                                groupId,
+                                                userId
+                                        )
+                );
+
+        assertEquals(
+                "Join request is already pending",
+                exception.getMessage()
+        );
+
+        verify(
+                groupJoinRequestRepository,
+                never()
+        ).save(any());
+
+        verify(
+                groupMemberRepository,
+                never()
+        ).save(any());
+    }
+
+    @Test
+    void joinGroup_shouldThrowConflictWhenAlreadyMember() {
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
+
+        StudyGroup group =
+                mock(StudyGroup.class);
+
+        User user =
+                mock(User.class);
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
+
+        when(
+                userRepository.findById(
+                        userId
+                )
+        ).thenReturn(
+                Optional.of(user)
+        );
 
         when(
                 groupMemberRepository
@@ -514,32 +906,48 @@ class StudyGroupServiceTest {
 
         assertThrows(
                 ConflictException.class,
-                () -> studyGroupService.joinGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .joinGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
                 groupMemberRepository,
                 never()
         ).save(any());
+
+        verify(
+                groupJoinRequestRepository,
+                never()
+        ).save(any());
     }
 
     @Test
     void joinGroup_shouldThrowNotFoundWhenGroupDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.empty());
+        UUID userId =
+                UUID.randomUUID();
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService.joinGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .joinGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
@@ -551,12 +959,20 @@ class StudyGroupServiceTest {
                 groupMemberRepository,
                 never()
         ).save(any());
+
+        verify(
+                groupJoinRequestRepository,
+                never()
+        ).save(any());
     }
 
     @Test
     void leaveGroup_shouldDeleteMemberMembership() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
@@ -564,8 +980,12 @@ class StudyGroupServiceTest {
         GroupMember membership =
                 mock(GroupMember.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         when(
                 groupMemberRepository
@@ -593,8 +1013,11 @@ class StudyGroupServiceTest {
 
     @Test
     void leaveGroup_shouldThrowConflictWhenUserIsOwner() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
@@ -602,8 +1025,12 @@ class StudyGroupServiceTest {
         GroupMember membership =
                 mock(GroupMember.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         when(
                 groupMemberRepository
@@ -622,10 +1049,12 @@ class StudyGroupServiceTest {
 
         assertThrows(
                 ConflictException.class,
-                () -> studyGroupService.leaveGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .leaveGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
@@ -636,14 +1065,21 @@ class StudyGroupServiceTest {
 
     @Test
     void leaveGroup_shouldThrowNotFoundWhenUserIsNotMember() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
 
         when(
                 groupMemberRepository
@@ -657,10 +1093,12 @@ class StudyGroupServiceTest {
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService.leaveGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .leaveGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
@@ -671,18 +1109,27 @@ class StudyGroupServiceTest {
 
     @Test
     void leaveGroup_shouldThrowNotFoundWhenGroupDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.empty());
+        UUID userId =
+                UUID.randomUUID();
+
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService.leaveGroup(
-                        groupId,
-                        userId
-                )
+                () ->
+                        studyGroupService
+                                .leaveGroup(
+                                        groupId,
+                                        userId
+                                )
         );
 
         verify(
@@ -696,8 +1143,11 @@ class StudyGroupServiceTest {
 
     @Test
     void getMembers_shouldReturnMembersOrderedByJoinTime() {
-        UUID groupId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
+
+        UUID userId =
+                UUID.randomUUID();
 
         StudyGroup group =
                 mock(StudyGroup.class);
@@ -708,8 +1158,17 @@ class StudyGroupServiceTest {
         GroupMember member =
                 mock(GroupMember.class);
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.of(group));
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.of(group)
+        );
+
+        when(group.getVisibility())
+                .thenReturn(
+                        GroupVisibility.PUBLIC
+                );
 
         when(
                 groupMemberRepository
@@ -735,9 +1194,10 @@ class StudyGroupServiceTest {
                 );
 
         List<GroupMemberResponse> result =
-                studyGroupService.getMembers(
-                        groupId
-                );
+                studyGroupService
+                        .getMembers(
+                                groupId
+                        );
 
         assertEquals(
                 1,
@@ -746,31 +1206,42 @@ class StudyGroupServiceTest {
 
         assertEquals(
                 userId,
-                result.get(0).userId()
+                result.get(0)
+                        .userId()
         );
 
         assertEquals(
                 "hieu",
-                result.get(0).username()
+                result.get(0)
+                        .username()
         );
 
         assertEquals(
                 GroupMemberRole.MEMBER,
-                result.get(0).role()
+                result.get(0)
+                        .role()
         );
     }
 
     @Test
     void getMembers_shouldThrowNotFoundWhenGroupDoesNotExist() {
-        UUID groupId = UUID.randomUUID();
+        UUID groupId =
+                UUID.randomUUID();
 
-        when(studyGroupRepository.findById(groupId))
-                .thenReturn(Optional.empty());
+        when(
+                studyGroupRepository
+                        .findById(groupId)
+        ).thenReturn(
+                Optional.empty()
+        );
 
         assertThrows(
                 NotFoundException.class,
-                () -> studyGroupService
-                        .getMembers(groupId)
+                () ->
+                        studyGroupService
+                                .getMembers(
+                                        groupId
+                                )
         );
 
         verify(

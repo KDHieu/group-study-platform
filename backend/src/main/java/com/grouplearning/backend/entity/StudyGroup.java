@@ -25,25 +25,60 @@ public class StudyGroup {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private GroupVisibility visibility = GroupVisibility.PUBLIC;
+
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(
+            name = "created_at",
+            nullable = false,
+            updatable = false
+    )
     private Instant createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
+    @Column(
+            name = "updated_at",
+            nullable = false
+    )
     private Instant updatedAt;
 
     protected StudyGroup() {
     }
 
+    /*
+     * Backward-compatible constructor.
+     *
+     * Existing code that creates a group without explicitly
+     * specifying visibility will continue to create PUBLIC groups.
+     */
     public StudyGroup(
             String name,
             String description,
             User owner
     ) {
+        this(
+                name,
+                description,
+                owner,
+                GroupVisibility.PUBLIC
+        );
+    }
+
+    public StudyGroup(
+            String name,
+            String description,
+            User owner,
+            GroupVisibility visibility
+    ) {
         this.name = name;
         this.description = description;
         this.owner = owner;
+        this.visibility =
+                visibility == null
+                        ? GroupVisibility.PUBLIC
+                        : visibility;
     }
 
     public UUID getId() {
@@ -60,6 +95,10 @@ public class StudyGroup {
 
     public User getOwner() {
         return owner;
+    }
+
+    public GroupVisibility getVisibility() {
+        return visibility;
     }
 
     public Instant getCreatedAt() {

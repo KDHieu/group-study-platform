@@ -1,10 +1,13 @@
 package com.grouplearning.backend.dto.request;
 
+import com.grouplearning.backend.entity.GroupVisibility;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-@Schema(description = "Request payload for creating a study group")
+@Schema(
+        description = "Request payload for creating a study group"
+)
 public record CreateGroupRequest(
 
         @Schema(
@@ -23,7 +26,41 @@ public record CreateGroupRequest(
                 maxLength = 1000
         )
         @Size(max = 1000)
-        String description
+        String description,
+
+        @Schema(
+                description = "Visibility of the study group",
+                example = "PUBLIC",
+                defaultValue = "PUBLIC",
+                allowableValues = {
+                        "PUBLIC",
+                        "PRIVATE"
+                }
+        )
+        GroupVisibility visibility
 
 ) {
+
+        public CreateGroupRequest {
+                if (visibility == null) {
+                        visibility = GroupVisibility.PUBLIC;
+                }
+        }
+
+        /*
+         * Backward-compatible constructor.
+         *
+         * Existing code and tests that create a group request
+         * without specifying visibility continue to work.
+         */
+        public CreateGroupRequest(
+                String name,
+                String description
+        ) {
+                this(
+                        name,
+                        description,
+                        GroupVisibility.PUBLIC
+                );
+        }
 }

@@ -1,7 +1,11 @@
+import {
+    Globe2,
+    Lock,
+} from "lucide-react"
 import { useState } from "react"
 import type { FormEvent } from "react"
-import { getApiErrorMessage } from "@/api/error"
 
+import { getApiErrorMessage } from "@/api/error"
 import { createGroup } from "@/api/groups"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,19 +20,57 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import type {
+    GroupVisibility,
+    StudyGroup,
+} from "@/types/group"
 
 interface CreateGroupDialogProps {
-    onCreated: () => void
+    onCreated: (
+        group: StudyGroup,
+    ) => void
 }
 
 export default function CreateGroupDialog({
                                               onCreated,
                                           }: CreateGroupDialogProps) {
-    const [open, setOpen] = useState(false)
-    const [name, setName] = useState("")
-    const [description, setDescription] = useState("")
-    const [submitting, setSubmitting] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    const [open, setOpen] =
+        useState(false)
+
+    const [name, setName] =
+        useState("")
+
+    const [description, setDescription] =
+        useState("")
+
+    const [visibility, setVisibility] =
+        useState<GroupVisibility>("PUBLIC")
+
+    const [submitting, setSubmitting] =
+        useState(false)
+
+    const [error, setError] =
+        useState<string | null>(null)
+
+    function resetForm() {
+        setName("")
+        setDescription("")
+        setVisibility("PUBLIC")
+        setError(null)
+    }
+
+    function handleOpenChange(
+        nextOpen: boolean,
+    ) {
+        setOpen(nextOpen)
+
+        if (
+            !nextOpen &&
+            !submitting
+        ) {
+            resetForm()
+        }
+    }
 
     async function handleSubmit(
         event: FormEvent<HTMLFormElement>,
@@ -39,16 +81,21 @@ export default function CreateGroupDialog({
             setSubmitting(true)
             setError(null)
 
-            await createGroup({
-                name: name.trim(),
-                description: description.trim() || undefined,
-            })
+            const createdGroup =
+                await createGroup({
+                    name: name.trim(),
+                    description:
+                        description.trim() ||
+                        undefined,
+                    visibility,
+                })
 
-            setName("")
-            setDescription("")
+            resetForm()
             setOpen(false)
 
-            onCreated()
+            onCreated(
+                createdGroup,
+            )
         } catch (error) {
             setError(
                 getApiErrorMessage(
@@ -64,7 +111,9 @@ export default function CreateGroupDialog({
     return (
         <Dialog
             open={open}
-            onOpenChange={setOpen}
+            onOpenChange={
+                handleOpenChange
+            }
         >
             <DialogTrigger
                 render={<Button />}
@@ -73,14 +122,20 @@ export default function CreateGroupDialog({
             </DialogTrigger>
 
             <DialogContent>
-                <form onSubmit={handleSubmit}>
+                <form
+                    onSubmit={
+                        handleSubmit
+                    }
+                >
                     <DialogHeader>
                         <DialogTitle>
                             Create study group
                         </DialogTitle>
 
                         <DialogDescription>
-                            Create a new group and invite others to study together.
+                            Create a new group
+                            and choose who can
+                            discover and join it.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -93,8 +148,14 @@ export default function CreateGroupDialog({
                             <Input
                                 id="group-name"
                                 value={name}
-                                onChange={(event) =>
-                                    setName(event.target.value)
+                                onChange={(
+                                    event,
+                                ) =>
+                                    setName(
+                                        event
+                                            .target
+                                            .value,
+                                    )
                                 }
                                 placeholder="Software Architecture"
                                 required
@@ -110,13 +171,80 @@ export default function CreateGroupDialog({
 
                             <Textarea
                                 id="group-description"
-                                value={description}
-                                onChange={(event) =>
-                                    setDescription(event.target.value)
+                                value={
+                                    description
+                                }
+                                onChange={(
+                                    event,
+                                ) =>
+                                    setDescription(
+                                        event
+                                            .target
+                                            .value,
+                                    )
                                 }
                                 placeholder="What will your group study?"
                                 maxLength={1000}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>
+                                Visibility
+                            </Label>
+
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                <Button
+                                    type="button"
+                                    variant={
+                                        visibility ===
+                                        "PUBLIC"
+                                            ? "default"
+                                            : "outline"
+                                    }
+                                    aria-pressed={
+                                        visibility ===
+                                        "PUBLIC"
+                                    }
+                                    onClick={() =>
+                                        setVisibility(
+                                            "PUBLIC",
+                                        )
+                                    }
+                                >
+                                    <Globe2 />
+                                    Public
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    variant={
+                                        visibility ===
+                                        "PRIVATE"
+                                            ? "default"
+                                            : "outline"
+                                    }
+                                    aria-pressed={
+                                        visibility ===
+                                        "PRIVATE"
+                                    }
+                                    onClick={() =>
+                                        setVisibility(
+                                            "PRIVATE",
+                                        )
+                                    }
+                                >
+                                    <Lock />
+                                    Private
+                                </Button>
+                            </div>
+
+                            <p className="text-sm text-muted-foreground">
+                                {visibility ===
+                                "PUBLIC"
+                                    ? "Public groups can be discovered and joined immediately."
+                                    : "Private groups are visible only to their members. Joining will require owner approval."}
+                            </p>
                         </div>
 
                         {error && (
@@ -129,7 +257,9 @@ export default function CreateGroupDialog({
                     <DialogFooter>
                         <Button
                             type="submit"
-                            disabled={submitting}
+                            disabled={
+                                submitting
+                            }
                         >
                             {submitting
                                 ? "Creating..."
