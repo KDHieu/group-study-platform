@@ -1,13 +1,13 @@
 package com.grouplearning.backend.repository;
 
 import com.grouplearning.backend.entity.GroupMember;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-
 import java.util.Optional;
-
 import java.util.UUID;
 
 public interface GroupMemberRepository
@@ -26,5 +26,29 @@ public interface GroupMemberRepository
     @EntityGraph(attributePaths = "user")
     List<GroupMember> findByGroup_IdOrderByJoinedAtAsc(
             UUID groupId
+    );
+
+    @EntityGraph(
+            attributePaths = {
+                    "group",
+                    "group.owner"
+            }
+    )
+    Page<GroupMember> findByUser_Id(
+            UUID userId,
+            Pageable pageable
+    );
+
+    @EntityGraph(
+            attributePaths = {
+                    "group",
+                    "group.owner"
+            }
+    )
+    Page<GroupMember>
+    findByUser_IdAndGroup_NameContainingIgnoreCase(
+            UUID userId,
+            String groupName,
+            Pageable pageable
     );
 }
