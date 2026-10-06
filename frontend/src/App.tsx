@@ -12,12 +12,15 @@ import FriendsPage from "@/pages/FriendsPage"
 import GroupDetailPage from "@/pages/GroupDetailPage"
 import GroupsPage from "@/pages/GroupsPage"
 import LoginPage from "@/pages/LoginPage"
+import MessagesPage from "@/pages/MessagesPage"
 import ProfilePage from "@/pages/ProfilePage"
 import RegisterPage from "@/pages/RegisterPage"
 import StudyRoomsPage from "@/pages/StudyRoomsPage"
 
 function LegacyStudyRoomRedirect() {
-    const { groupId } =
+    const {
+        groupId,
+    } =
         useParams()
 
     if (!groupId) {
@@ -142,19 +145,24 @@ function App() {
                     />
 
                     <Route
-                        path="/challenges"
+                        path="/messages"
                         element={
-                            <div>
-                                Challenges
-                            </div>
+                            <MessagesPage />
                         }
                     />
 
                     <Route
-                        path="/messages"
+                        path="/messages/:userId"
+                        element={
+                            <MessagesPage />
+                        }
+                    />
+
+                    <Route
+                        path="/challenges"
                         element={
                             <div>
-                                Messages
+                                Challenges
                             </div>
                         }
                     />
