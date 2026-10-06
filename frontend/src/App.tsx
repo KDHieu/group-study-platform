@@ -7,6 +7,7 @@ import {
 
 import ProtectedRoute from "@/auth/ProtectedRoute"
 import AppLayout from "@/components/layout/AppLayout"
+import ChallengesPage from "@/pages/ChallengesPage"
 import DashboardPage from "@/pages/DashboardPage"
 import FriendsPage from "@/pages/FriendsPage"
 import GroupDetailPage from "@/pages/GroupDetailPage"
@@ -161,9 +162,7 @@ function App() {
                     <Route
                         path="/challenges"
                         element={
-                            <div>
-                                Challenges
-                            </div>
+                            <ChallengesPage />
                         }
                     />
                 </Route>
