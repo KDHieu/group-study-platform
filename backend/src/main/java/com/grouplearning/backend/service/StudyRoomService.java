@@ -1,16 +1,21 @@
 package com.grouplearning.backend.service;
 
 import com.grouplearning.backend.config.LiveKitProperties;
+import com.grouplearning.backend.dto.request.CreateCallRoomRequest;
+import com.grouplearning.backend.dto.response.CallRoomParticipantResponse;
+import com.grouplearning.backend.dto.response.CallRoomResponse;
 import com.grouplearning.backend.dto.response.ChatMessageResponse;
 import com.grouplearning.backend.dto.response.ChatSenderResponse;
 import com.grouplearning.backend.dto.response.TypingEventResponse;
 import com.grouplearning.backend.dto.response.VideoTokenResponse;
+import com.grouplearning.backend.entity.CallRoom;
 import com.grouplearning.backend.entity.ChatMessage;
 import com.grouplearning.backend.entity.ChatMessageType;
 import com.grouplearning.backend.entity.StudyGroup;
 import com.grouplearning.backend.entity.User;
 import com.grouplearning.backend.exception.ForbiddenException;
 import com.grouplearning.backend.exception.NotFoundException;
+import com.grouplearning.backend.repository.CallRoomRepository;
 import com.grouplearning.backend.repository.ChatMessageRepository;
 import com.grouplearning.backend.repository.GroupMemberRepository;
 import com.grouplearning.backend.repository.StudyGroupRepository;
@@ -18,8 +23,11 @@ import com.grouplearning.backend.repository.UserRepository;
 import io.livekit.server.AccessToken;
 import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
+import io.livekit.server.RoomServiceClient;
+import livekit.LivekitModels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,7 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
+import retrofit2.Response;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -56,13 +67,17 @@ public class StudyRoomService {
 
     private final LiveKitProperties liveKitProperties;
 
+    private final CallRoomRepository callRoomRepository;
+
+    @Autowired
     public StudyRoomService(
             ChatMessageRepository chatMessageRepository,
             StudyGroupRepository studyGroupRepository,
             GroupMemberRepository groupMemberRepository,
             UserRepository userRepository,
             ObjectStorageService objectStorageService,
-            LiveKitProperties liveKitProperties
+            LiveKitProperties liveKitProperties,
+            CallRoomRepository callRoomRepository
     ) {
         this.chatMessageRepository =
                 chatMessageRepository;
@@ -81,6 +96,32 @@ public class StudyRoomService {
 
         this.liveKitProperties =
                 liveKitProperties;
+
+        this.callRoomRepository =
+                callRoomRepository;
+    }
+
+    /*
+     * Compatibility constructor for unit tests
+     * created before CallRoomRepository existed.
+     */
+    public StudyRoomService(
+            ChatMessageRepository chatMessageRepository,
+            StudyGroupRepository studyGroupRepository,
+            GroupMemberRepository groupMemberRepository,
+            UserRepository userRepository,
+            ObjectStorageService objectStorageService,
+            LiveKitProperties liveKitProperties
+    ) {
+        this(
+                chatMessageRepository,
+                studyGroupRepository,
+                groupMemberRepository,
+                userRepository,
+                objectStorageService,
+                liveKitProperties,
+                null
+        );
     }
 
     // =========================================================
@@ -313,11 +354,63 @@ public class StudyRoomService {
     }
 
     // =========================================================
-    // Video room
+    // Call rooms
     // =========================================================
 
+    @Transactional
+    public CallRoomResponse createCallRoom(
+            UUID groupId,
+            UUID userId,
+            CreateCallRoomRequest request
+    ) {
+        StudyGroup group =
+                findGroup(groupId);
+
+        ensureMember(
+                groupId,
+                userId,
+                "You must be a member of this study group to create a call room"
+        );
+
+        User creator =
+                findUser(userId);
+
+        String normalizedName =
+                request.name() == null
+                        ? ""
+                        : request.name().trim();
+
+        if (normalizedName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Call room name must not be blank"
+            );
+        }
+
+        if (normalizedName.length() > 100) {
+            throw new IllegalArgumentException(
+                    "Call room name must not exceed 100 characters"
+            );
+        }
+
+        CallRoom callRoom =
+                new CallRoom(
+                        group,
+                        normalizedName,
+                        creator
+                );
+
+        CallRoom saved =
+                requireCallRoomRepository()
+                        .save(callRoom);
+
+        return toCallRoomResponse(
+                saved,
+                List.of()
+        );
+    }
+
     @Transactional(readOnly = true)
-    public VideoTokenResponse createVideoJoinToken(
+    public List<CallRoomResponse> getCallRooms(
             UUID groupId,
             UUID userId
     ) {
@@ -326,15 +419,190 @@ public class StudyRoomService {
         ensureMember(
                 groupId,
                 userId,
-                "You must be a member of this study group to join the video room"
+                "You must be a member of this study group to access call rooms"
         );
+
+        return requireCallRoomRepository()
+                .findByGroup_IdOrderByCreatedAtAsc(
+                        groupId
+                )
+                .stream()
+                .map(
+                        callRoom ->
+                                toCallRoomResponse(
+                                        callRoom,
+                                        getCallRoomParticipants(
+                                                groupId,
+                                                callRoom.getId()
+                                        )
+                                )
+                )
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public VideoTokenResponse createCallRoomJoinToken(
+            UUID groupId,
+            UUID callRoomId,
+            UUID userId
+    ) {
+        ensureGroupExists(groupId);
+
+        ensureMember(
+                groupId,
+                userId,
+                "You must be a member of this study group to join a call room"
+        );
+
+        CallRoom callRoom =
+                requireCallRoomRepository()
+                        .findByIdAndGroup_Id(
+                                callRoomId,
+                                groupId
+                        )
+                        .orElseThrow(
+                                () -> new NotFoundException(
+                                        "Call room not found"
+                                )
+                        );
 
         User user =
                 findUser(userId);
 
         String roomName =
-                ROOM_PREFIX + groupId;
+                buildCallRoomName(
+                        groupId,
+                        callRoom.getId()
+                );
 
+        return createLiveKitJoinToken(
+                roomName,
+                user
+        );
+    }
+
+    // =========================================================
+    // LiveKit participant presence
+    // =========================================================
+
+    private List<CallRoomParticipantResponse> getCallRoomParticipants(
+            UUID groupId,
+            UUID callRoomId
+    ) {
+        String roomName =
+                buildCallRoomName(
+                        groupId,
+                        callRoomId
+                );
+
+        try {
+            RoomServiceClient roomServiceClient =
+                    RoomServiceClient.create(
+                            liveKitProperties.getInternalUrl(),
+                            liveKitProperties.getApiKey(),
+                            liveKitProperties.getApiSecret()
+                    );
+
+            Response<List<LivekitModels.ParticipantInfo>> response =
+                    roomServiceClient
+                            .listParticipants(
+                                    roomName
+                            )
+                            .execute();
+
+            if (!response.isSuccessful()) {
+
+                /*
+                 * A persisted CallRoom may legitimately have no
+                 * active LiveKit room yet because LiveKit creates
+                 * the actual room when somebody joins.
+                 *
+                 * In that case the UI should simply show
+                 * zero participants instead of failing the
+                 * entire Study Room page.
+                 */
+                if (response.code() != 404) {
+                    log.warn(
+                            "Could not retrieve participants for LiveKit room {}. HTTP status: {}",
+                            roomName,
+                            response.code()
+                    );
+                }
+
+                return List.of();
+            }
+
+            List<LivekitModels.ParticipantInfo> participants =
+                    response.body();
+
+            if (participants == null) {
+                return List.of();
+            }
+
+            return participants
+                    .stream()
+                    .map(
+                            this::toCallRoomParticipantResponse
+                    )
+                    .toList();
+
+        } catch (IOException | RuntimeException exception) {
+
+            /*
+             * Presence is supplementary information.
+             * A temporary LiveKit failure must not prevent users
+             * from loading their persistent Call Rooms.
+             */
+            log.warn(
+                    "Could not retrieve participants for LiveKit room {}",
+                    roomName,
+                    exception
+            );
+
+            return List.of();
+        }
+    }
+
+    private CallRoomParticipantResponse toCallRoomParticipantResponse(
+            LivekitModels.ParticipantInfo participant
+    ) {
+        String identity =
+                participant.getIdentity();
+
+        String name =
+                participant.getName();
+
+        if (name == null
+                || name.isBlank()) {
+
+            name = identity;
+        }
+
+        return new CallRoomParticipantResponse(
+                participant.getSid(),
+                identity,
+                name
+        );
+    }
+
+    private String buildCallRoomName(
+            UUID groupId,
+            UUID callRoomId
+    ) {
+        return ROOM_PREFIX
+                + groupId
+                + "-call-"
+                + callRoomId;
+    }
+
+    // =========================================================
+    // LiveKit token creation
+    // =========================================================
+
+    private VideoTokenResponse createLiveKitJoinToken(
+            String roomName,
+            User user
+    ) {
         String participantIdentity =
                 user.getId().toString();
 
@@ -441,6 +709,16 @@ public class StudyRoomService {
         }
     }
 
+    private CallRoomRepository requireCallRoomRepository() {
+        if (callRoomRepository == null) {
+            throw new IllegalStateException(
+                    "CallRoomRepository is required for call room operations"
+            );
+        }
+
+        return callRoomRepository;
+    }
+
     // =========================================================
     // Response mapping
     // =========================================================
@@ -498,6 +776,21 @@ public class StudyRoomService {
                 user.getUsername(),
                 user.getDisplayName(),
                 avatarUrl
+        );
+    }
+
+    private CallRoomResponse toCallRoomResponse(
+            CallRoom callRoom,
+            List<CallRoomParticipantResponse> participants
+    ) {
+        return new CallRoomResponse(
+                callRoom.getId(),
+                callRoom.getGroup().getId(),
+                callRoom.getName(),
+                callRoom.getCreatedBy().getId(),
+                callRoom.getCreatedBy().getUsername(),
+                callRoom.getCreatedAt(),
+                participants
         );
     }
 

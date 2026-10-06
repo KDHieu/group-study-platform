@@ -145,6 +145,16 @@ export default function GroupsPage() {
         )
     }
 
+    function getGroupPath(
+        group: StudyGroup,
+    ) {
+        if (mode === "MINE") {
+            return `/groups/${group.id}/room`
+        }
+
+        return `/groups/${group.id}`
+    }
+
     const isDiscover =
         mode === "DISCOVER"
 
@@ -166,7 +176,7 @@ export default function GroupsPage() {
                     <p className="mt-1 text-muted-foreground">
                         {isDiscover
                             ? "Browse public groups, or find a private group by entering its exact name."
-                            : "View all public and private study groups you belong to."}
+                            : "Open the study rooms for groups you belong to."}
                     </p>
                 </div>
 
@@ -175,7 +185,7 @@ export default function GroupsPage() {
                         group,
                     ) =>
                         navigate(
-                            `/groups/${group.id}`,
+                            `/groups/${group.id}/room`,
                         )
                     }
                 />
@@ -287,7 +297,9 @@ export default function GroupsPage() {
                                     <div className="flex items-start justify-between gap-3">
                                         <CardTitle>
                                             <Link
-                                                to={`/groups/${group.id}`}
+                                                to={getGroupPath(
+                                                    group,
+                                                )}
                                                 className="hover:underline"
                                             >
                                                 {
@@ -320,11 +332,28 @@ export default function GroupsPage() {
                                     </CardDescription>
                                 </CardHeader>
 
-                                <CardContent>
+                                <CardContent className="space-y-4">
                                     <p className="text-sm text-muted-foreground">
                                         {group.description ||
                                             "No description provided."}
                                     </p>
+
+                                    <Button
+                                        render={
+                                            <Link
+                                                to={getGroupPath(
+                                                    group,
+                                                )}
+                                            />
+                                        }
+                                        variant="outline"
+                                        className="w-full"
+                                    >
+                                        {mode ===
+                                        "MINE"
+                                            ? "Open Study Room"
+                                            : "View group"}
+                                    </Button>
                                 </CardContent>
                             </Card>
                         ),

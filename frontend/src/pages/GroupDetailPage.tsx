@@ -2,6 +2,7 @@ import axios from "axios"
 import {
     Check,
     Clock3,
+    DoorOpen,
     Globe2,
     Lock,
     Trash2,
@@ -32,7 +33,6 @@ import {
     rejectJoinRequest,
 } from "@/api/groups"
 import { useAuth } from "@/auth/useAuth"
-import GroupChat from "@/components/chat/GroupChat"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -41,7 +41,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import StudyVideoRoom from "@/components/video/StudyVideoRoom"
 import type {
     GroupMember,
     StudyGroup,
@@ -126,11 +125,6 @@ export default function GroupDetailPage() {
                 setMyJoinRequest(null)
                 setPendingRequests([])
 
-                /*
-                 * Step 1:
-                 * Basic metadata is available even
-                 * to a PRIVATE-group outsider.
-                 */
                 const groupResponse =
                     await getGroupById(
                         currentGroupId,
@@ -140,14 +134,6 @@ export default function GroupDetailPage() {
                     groupResponse,
                 )
 
-                /*
-                 * Step 2:
-                 * Member access is stricter.
-                 *
-                 * PRIVATE outsider receives 403 here,
-                 * but that must not make the whole
-                 * group page fail.
-                 */
                 let hasPrivateContentAccess =
                     true
 
@@ -186,11 +172,6 @@ export default function GroupDetailPage() {
                     groupResponse.ownerId ===
                     user?.id
 
-                /*
-                 * Step 3:
-                 * PRIVATE outsider checks their own
-                 * request status.
-                 */
                 if (
                     groupResponse.visibility ===
                     "PRIVATE" &&
@@ -206,10 +187,6 @@ export default function GroupDetailPage() {
                     )
                 }
 
-                /*
-                 * Step 4:
-                 * PRIVATE owner loads pending requests.
-                 */
                 if (
                     groupResponse.visibility ===
                     "PRIVATE" &&
@@ -315,23 +292,6 @@ export default function GroupDetailPage() {
             await leaveGroup(
                 groupId,
             )
-
-            if (
-                group.visibility ===
-                "PRIVATE"
-            ) {
-                /*
-                 * The user may still view metadata
-                 * after leaving, but refreshing makes
-                 * the access state immediately clear.
-                 */
-                setRefreshKey(
-                    (current) =>
-                        current + 1,
-                )
-
-                return
-            }
 
             setRefreshKey(
                 (current) =>
@@ -460,41 +420,30 @@ export default function GroupDetailPage() {
         }
     }
 
-    function renderMembershipAction() {
-        if (!group) {
-            return null
+    function handleOpenStudyRoom() {
+        if (!groupId) {
+            return
         }
 
-        if (isOwner) {
-            return (
-                <Button
-                    variant="destructive"
-                    disabled={
-                        actionLoading
-                    }
-                    onClick={
-                        handleDelete
-                    }
-                >
-                    <Trash2 />
-                    Delete group
-                </Button>
-            )
+        navigate(
+            `/groups/${groupId}/room`,
+        )
+    }
+
+    function renderPrimaryAction() {
+        if (!group) {
+            return null
         }
 
         if (isMember) {
             return (
                 <Button
-                    variant="outline"
-                    disabled={
-                        actionLoading
-                    }
                     onClick={
-                        handleLeave
+                        handleOpenStudyRoom
                     }
                 >
-                    <UserMinus />
-                    Leave group
+                    <DoorOpen />
+                    Open Study Room
                 </Button>
             )
         }
@@ -594,7 +543,7 @@ export default function GroupDetailPage() {
         )
     }
 
-    const canAccessPrivateContent =
+    const canSeeMembers =
         group.visibility ===
         "PUBLIC" ||
         isMember
@@ -639,10 +588,41 @@ export default function GroupDetailPage() {
                     </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     {
-                        renderMembershipAction()
+                        renderPrimaryAction()
                     }
+
+                    {isMember &&
+                        !isOwner && (
+                            <Button
+                                variant="outline"
+                                disabled={
+                                    actionLoading
+                                }
+                                onClick={
+                                    handleLeave
+                                }
+                            >
+                                <UserMinus />
+                                Leave group
+                            </Button>
+                        )}
+
+                    {isOwner && (
+                        <Button
+                            variant="destructive"
+                            disabled={
+                                actionLoading
+                            }
+                            onClick={
+                                handleDelete
+                            }
+                        >
+                            <Trash2 />
+                            Delete group
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -664,12 +644,10 @@ export default function GroupDetailPage() {
                             </CardTitle>
 
                             <CardDescription>
-                                Group members,
-                                chat and study
-                                room are available
-                                only after your
-                                join request has
-                                been approved.
+                                Request access
+                                to enter this
+                                group's Study
+                                Room.
                             </CardDescription>
                         </CardHeader>
 
@@ -700,9 +678,9 @@ export default function GroupDetailPage() {
 
                             <CardDescription>
                                 Review users
-                                requesting access
-                                to this private
-                                group.
+                                requesting
+                                access to this
+                                Study Room.
                             </CardDescription>
                         </CardHeader>
 
@@ -779,7 +757,7 @@ export default function GroupDetailPage() {
                     </Card>
                 )}
 
-            {canAccessPrivateContent && (
+            {canSeeMembers && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -825,41 +803,6 @@ export default function GroupDetailPage() {
                     </CardContent>
                 </Card>
             )}
-
-            {isMember && (
-                <StudyVideoRoom
-                    groupId={
-                        group.id
-                    }
-                />
-            )}
-
-            {isMember &&
-            user?.id ? (
-                <GroupChat
-                    groupId={
-                        group.id
-                    }
-                    currentUserId={
-                        user.id
-                    }
-                />
-            ) : group.visibility ===
-            "PUBLIC" ? (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Group chat
-                        </CardTitle>
-
-                        <CardDescription>
-                            Join this study
-                            group to access
-                            the group chat.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-            ) : null}
         </div>
     )
 }

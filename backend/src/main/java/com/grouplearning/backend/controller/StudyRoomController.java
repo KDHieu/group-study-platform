@@ -1,5 +1,7 @@
 package com.grouplearning.backend.controller;
 
+import com.grouplearning.backend.dto.request.CreateCallRoomRequest;
+import com.grouplearning.backend.dto.response.CallRoomResponse;
 import com.grouplearning.backend.dto.response.ChatMessageResponse;
 import com.grouplearning.backend.dto.response.VideoTokenResponse;
 import com.grouplearning.backend.service.StudyRoomService;
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -21,6 +24,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -28,13 +32,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/groups/{groupId}")
 @Tag(
         name = "Study Rooms",
-        description = "Study room chat, media and video APIs"
+        description = "Study room chat, media, call room and video APIs"
 )
 @SecurityRequirement(name = "bearerAuth")
 public class StudyRoomController {
@@ -260,22 +265,22 @@ public class StudyRoomController {
     }
 
     // =========================================================
-    // Video room
+    // Call rooms
     // =========================================================
 
-    @PostMapping("/video/token")
+    @GetMapping("/call-rooms")
     @Operation(
-            summary = "Create video room join token",
+            summary = "Get call rooms",
             description = """
-                    Creates a temporary LiveKit token that allows
-                    the authenticated group member to join
-                    the study room video call.
+                    Returns the call rooms that belong to this study group.
+
+                    The authenticated user must be a member of the group.
                     """
     )
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Video room token created successfully"
+                    description = "Call rooms retrieved successfully"
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -290,8 +295,116 @@ public class StudyRoomController {
                     ref = "#/components/responses/NotFound"
             )
     })
-    public ResponseEntity<VideoTokenResponse> createVideoToken(
+    public ResponseEntity<List<CallRoomResponse>> getCallRooms(
             @PathVariable UUID groupId,
+
+            Principal principal
+    ) {
+        UUID userId =
+                extractUserId(principal);
+
+        List<CallRoomResponse> response =
+                studyRoomService.getCallRooms(
+                        groupId,
+                        userId
+                );
+
+        return ResponseEntity.ok(
+                response
+        );
+    }
+
+    @PostMapping("/call-rooms")
+    @Operation(
+            summary = "Create call room",
+            description = """
+                    Creates a new call room inside this study group.
+
+                    Any authenticated member of the study group
+                    may create a call room.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Call room created successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    ref = "#/components/responses/BadRequest"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    ref = "#/components/responses/Forbidden"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFound"
+            )
+    })
+    public ResponseEntity<CallRoomResponse> createCallRoom(
+            @PathVariable UUID groupId,
+
+            @Valid
+            @RequestBody
+            CreateCallRoomRequest request,
+
+            Principal principal
+    ) {
+        UUID userId =
+                extractUserId(principal);
+
+        CallRoomResponse response =
+                studyRoomService.createCallRoom(
+                        groupId,
+                        userId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(201)
+                .body(response);
+    }
+
+    @PostMapping(
+            "/call-rooms/{callRoomId}/token"
+    )
+    @Operation(
+            summary = "Create call room join token",
+            description = """
+                    Creates a temporary LiveKit token for one specific
+                    call room inside this study group.
+
+                    Different call room IDs map to different LiveKit rooms.
+                    The authenticated user must be a study group member.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Call room token created successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    ref = "#/components/responses/Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    ref = "#/components/responses/Forbidden"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    ref = "#/components/responses/NotFound"
+            )
+    })
+    public ResponseEntity<VideoTokenResponse> createCallRoomToken(
+            @PathVariable UUID groupId,
+
+            @PathVariable UUID callRoomId,
 
             Principal principal
     ) {
@@ -300,8 +413,9 @@ public class StudyRoomController {
 
         VideoTokenResponse response =
                 studyRoomService
-                        .createVideoJoinToken(
+                        .createCallRoomJoinToken(
                                 groupId,
+                                callRoomId,
                                 userId
                         );
 
