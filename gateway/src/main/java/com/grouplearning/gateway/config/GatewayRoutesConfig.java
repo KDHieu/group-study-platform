@@ -58,6 +58,11 @@ public class GatewayRoutesConfig {
                         .uri(backendUrl)
                 )
 
+                .route("message-service", route -> route
+                        .path("/api/messages/**")
+                        .uri(backendUrl)
+                )
+
                 .build();
     }
 }

@@ -23,6 +23,17 @@ export default function AppLayout() {
             "/rooms/",
         )
 
+    const isMessages =
+        location.pathname ===
+        "/messages" ||
+        location.pathname.startsWith(
+            "/messages/",
+        )
+
+    const isWorkspace =
+        isStudyRooms ||
+        isMessages
+
     return (
         <CallProvider>
             <SidebarProvider>
@@ -33,7 +44,7 @@ export default function AppLayout() {
 
                     <main
                         className={
-                            isStudyRooms
+                            isWorkspace
                                 ? "min-h-0 flex-1 overflow-hidden"
                                 : "flex-1 p-6"
                         }

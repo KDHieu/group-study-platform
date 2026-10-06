@@ -1,19 +1,29 @@
-import { Client } from "@stomp/stompjs";
+import { Client } from "@stomp/stompjs"
 
-import { tokenStorage } from "@/auth/tokenStorage";
+import { tokenStorage } from "@/auth/tokenStorage"
 
 function getWebSocketUrl(): string {
     const apiBaseUrl =
         import.meta.env.VITE_API_BASE_URL ??
-        "http://localhost:8080/api";
+        "http://localhost:8080/api"
 
     const apiOrigin =
-        apiBaseUrl.replace(/\/api\/?$/, "");
+        apiBaseUrl.replace(
+            /\/api\/?$/,
+            "",
+        )
 
-    return apiOrigin
-            .replace(/^http:/, "ws:")
-            .replace(/^https:/, "wss:")
-        + "/ws";
+    return (
+        apiOrigin
+            .replace(
+                /^http:/,
+                "ws:",
+            )
+            .replace(
+                /^https:/,
+                "wss:",
+            ) + "/ws"
+    )
 }
 
 export function createChatClient(
@@ -21,42 +31,50 @@ export function createChatClient(
     onError: (message: string) => void,
     onClose: () => void,
 ): Client {
-    const token = tokenStorage.get();
+    const token =
+        tokenStorage.get()
 
-    const client = new Client({
-        brokerURL: getWebSocketUrl(),
+    const client =
+        new Client({
+            brokerURL:
+                getWebSocketUrl(),
 
-        connectHeaders: token
-            ? {
-                Authorization:
-                    `Bearer ${token}`,
-            }
-            : {},
+            connectHeaders: token
+                ? {
+                    Authorization:
+                        `Bearer ${token}`,
+                }
+                : {},
 
             reconnectDelay: 5000,
 
-        heartbeatIncoming: 10000,
-        heartbeatOutgoing: 10000,
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
 
-        onConnect,
+            onConnect,
 
-        onStompError: (frame) => {
-            onError(
-                frame.headers.message ??
-                "STOMP error",
-            );
-        },
+            onStompError: (
+                frame,
+            ) => {
+                onError(
+                    frame.headers
+                        .message ??
+                    "STOMP error",
+                )
+            },
 
-        onWebSocketError: () => {
-            onError(
-                "WebSocket connection error",
-            );
-        },
+            onWebSocketError:
+                () => {
+                    onError(
+                        "WebSocket connection error",
+                    )
+                },
 
-        onWebSocketClose: () => {
-            onClose();
-        },
-    });
+            onWebSocketClose:
+                () => {
+                    onClose()
+                },
+        })
 
-    return client;
+    return client
 }

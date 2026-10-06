@@ -6,13 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -32,15 +32,22 @@ public class WebSocketConfig
     private static final String GROUP_TOPIC_PREFIX =
             "/topic/groups/";
 
+    private static final String DIRECT_MESSAGE_DESTINATION =
+            "/user/queue/messages";
+
     private final JwtDecoder jwtDecoder;
+
     private final GroupMemberRepository groupMemberRepository;
 
     public WebSocketConfig(
             JwtDecoder jwtDecoder,
             GroupMemberRepository groupMemberRepository
     ) {
-        this.jwtDecoder = jwtDecoder;
-        this.groupMemberRepository = groupMemberRepository;
+        this.jwtDecoder =
+                jwtDecoder;
+
+        this.groupMemberRepository =
+                groupMemberRepository;
     }
 
     @Override
@@ -59,11 +66,16 @@ public class WebSocketConfig
             MessageBrokerRegistry registry
     ) {
         registry.enableSimpleBroker(
-                "/topic"
+                "/topic",
+                "/queue"
         );
 
         registry.setApplicationDestinationPrefixes(
                 "/app"
+        );
+
+        registry.setUserDestinationPrefix(
+                "/user"
         );
     }
 
@@ -80,10 +92,11 @@ public class WebSocketConfig
                             MessageChannel channel
                     ) {
                         StompHeaderAccessor accessor =
-                                MessageHeaderAccessor.getAccessor(
-                                        message,
-                                        StompHeaderAccessor.class
-                                );
+                                MessageHeaderAccessor
+                                        .getAccessor(
+                                                message,
+                                                StompHeaderAccessor.class
+                                        );
 
                         if (accessor == null) {
                             return message;
@@ -92,12 +105,20 @@ public class WebSocketConfig
                         StompCommand command =
                                 accessor.getCommand();
 
-                        if (StompCommand.CONNECT.equals(command)) {
-                            authenticateConnect(accessor);
+                        if (StompCommand.CONNECT.equals(
+                                command
+                        )) {
+                            authenticateConnect(
+                                    accessor
+                            );
                         }
 
-                        if (StompCommand.SUBSCRIBE.equals(command)) {
-                            authorizeSubscription(accessor);
+                        if (StompCommand.SUBSCRIBE.equals(
+                                command
+                        )) {
+                            authorizeSubscription(
+                                    accessor
+                            );
                         }
 
                         return message;
@@ -115,7 +136,9 @@ public class WebSocketConfig
                 );
 
         if (authorization == null
-                || !authorization.startsWith("Bearer ")) {
+                || !authorization.startsWith(
+                "Bearer "
+        )) {
 
             throw new MessagingException(
                     "Missing WebSocket authentication token"
@@ -127,12 +150,18 @@ public class WebSocketConfig
 
         try {
             Jwt jwt =
-                    jwtDecoder.decode(token);
+                    jwtDecoder.decode(
+                            token
+                    );
 
             JwtAuthenticationToken authentication =
-                    new JwtAuthenticationToken(jwt);
+                    new JwtAuthenticationToken(
+                            jwt
+                    );
 
-            accessor.setUser(authentication);
+            accessor.setUser(
+                    authentication
+            );
 
         } catch (JwtException exception) {
             throw new MessagingException(
@@ -159,16 +188,42 @@ public class WebSocketConfig
         String destination =
                 accessor.getDestination();
 
-        if (destination == null
-                || !destination.startsWith(
+        if (destination == null) {
+            return;
+        }
+
+        /*
+         * Spring resolves this logical destination into
+         * a session-specific private queue.
+         */
+        if (DIRECT_MESSAGE_DESTINATION.equals(
+                destination
+        )) {
+            return;
+        }
+
+        /*
+         * Clients must use /user/queue/messages instead
+         * of subscribing directly to a raw broker queue.
+         */
+        if (destination.startsWith(
+                "/queue/"
+        )) {
+            throw new MessagingException(
+                    "Direct queue subscriptions are not allowed"
+            );
+        }
+
+        if (!destination.startsWith(
                 GROUP_TOPIC_PREFIX
         )) {
-
             return;
         }
 
         UUID groupId =
-                extractGroupId(destination);
+                extractGroupId(
+                        destination
+                );
 
         UUID userId;
 
@@ -179,9 +234,11 @@ public class WebSocketConfig
                                     .getToken()
                                     .getSubject()
                     );
+
         } catch (IllegalArgumentException exception) {
             throw new MessagingException(
-                    "Invalid authenticated user identifier"
+                    "Invalid authenticated user identifier",
+                    exception
             );
         }
 
