@@ -133,29 +133,29 @@ Hệ thống sử dụng kiến trúc **microservices** với mô hình **API Ga
 
 Backend tuân theo kiến trúc **3-layer** (Controller → Service → Repository) của Spring Boot:
 
-| Layer | Vai trò | Packages |
-|---|---|---|
-| **Controller** | Xử lý HTTP request/response, validation đầu vào, mapping DTO | `controller/` |
-| **Service** | Business logic, transaction management, authorization | `service/` |
-| **Repository** | Data access, JPA queries, database interaction | `repository/` |
-| **Entity** | Domain model, JPA entity mapping | `entity/` |
-| **DTO** | Data transfer objects (request/response) | `dto/request/`, `dto/response/` |
-| **Config** | Spring configuration beans | `config/` |
-| **Security** | Security filter chain, JWT resource server | `security/` |
-| **Exception** | Global exception handling, custom exceptions | `exception/` |
+| Layer          | Vai trò                                                      | Packages                        |
+| -------------- | ------------------------------------------------------------ | ------------------------------- |
+| **Controller** | Xử lý HTTP request/response, validation đầu vào, mapping DTO | `controller/`                   |
+| **Service**    | Business logic, transaction management, authorization        | `service/`                      |
+| **Repository** | Data access, JPA queries, database interaction               | `repository/`                   |
+| **Entity**     | Domain model, JPA entity mapping                             | `entity/`                       |
+| **DTO**        | Data transfer objects (request/response)                     | `dto/request/`, `dto/response/` |
+| **Config**     | Spring configuration beans                                   | `config/`                       |
+| **Security**   | Security filter chain, JWT resource server                   | `security/`                     |
+| **Exception**  | Global exception handling, custom exceptions                 | `exception/`                    |
 
 ### Các Design Pattern được sử dụng
 
-| Pattern | Nơi áp dụng |
-|---|---|
-| **API Gateway** | Spring Cloud Gateway WebFlux — điểm vào duy nhất, routing, CORS |
-| **Repository Pattern** | Spring Data JPA repositories trừu tượng hóa truy cập dữ liệu |
-| **DTO Pattern** | Tách biệt domain entity và API contract qua request/response DTOs |
-| **Stateless Authentication** | JWT + OAuth2 Resource Server — không lưu session phía server |
-| **Database Migration** | Flyway — quản lý schema versioning qua migration scripts |
-| **Object Storage** | MinIO (S3-compatible) — lưu trữ file media tách biệt khỏi DB |
-| **Message Broker** | STOMP over WebSocket — simple in-memory broker cho pub/sub |
-| **SFU (Selective Forwarding Unit)** | LiveKit server — media streaming cho video/audio call |
+| Pattern                             | Nơi áp dụng                                                       |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| **API Gateway**                     | Spring Cloud Gateway WebFlux — điểm vào duy nhất, routing, CORS   |
+| **Repository Pattern**              | Spring Data JPA repositories trừu tượng hóa truy cập dữ liệu      |
+| **DTO Pattern**                     | Tách biệt domain entity và API contract qua request/response DTOs |
+| **Stateless Authentication**        | JWT + OAuth2 Resource Server — không lưu session phía server      |
+| **Database Migration**              | Flyway — quản lý schema versioning qua migration scripts          |
+| **Object Storage**                  | MinIO (S3-compatible) — lưu trữ file media tách biệt khỏi DB      |
+| **Message Broker**                  | STOMP over WebSocket — simple in-memory broker cho pub/sub        |
+| **SFU (Selective Forwarding Unit)** | LiveKit server — media streaming cho video/audio call             |
 
 ---
 
@@ -163,45 +163,45 @@ Backend tuân theo kiến trúc **3-layer** (Controller → Service → Reposito
 
 ### Backend
 
-| Công nghệ | Phiên bản | Mục đích |
-|---|---|---|
-| **Java** | 17 | Ngôn ngữ lập trình |
-| **Spring Boot** | 4.1.1 | Framework chính |
-| **Spring Data JPA** | — | ORM & data access |
-| **Spring Security** | — | Authentication & authorization |
-| **Spring OAuth2 Resource Server** | — | JWT token validation |
-| **Spring WebSocket** | — | STOMP messaging |
-| **Spring Validation** | — | Request validation (Bean Validation) |
-| **Spring Cloud Gateway** | 2025.1.3 | API Gateway (WebFlux-based) |
-| **PostgreSQL** | 16 | Relational database |
-| **Flyway** | — | Database migration |
-| **MinIO** | 8.5.17 (client) | S3-compatible object storage |
-| **LiveKit Server SDK** | 0.16.0 | Video/Audio call token generation |
-| **SpringDoc OpenAPI** | 3.0.2 | Swagger UI & API documentation |
+| Công nghệ                         | Phiên bản       | Mục đích                             |
+| --------------------------------- | --------------- | ------------------------------------ |
+| **Java**                          | 17              | Ngôn ngữ lập trình                   |
+| **Spring Boot**                   | 4.1.1           | Framework chính                      |
+| **Spring Data JPA**               | —               | ORM & data access                    |
+| **Spring Security**               | —               | Authentication & authorization       |
+| **Spring OAuth2 Resource Server** | —               | JWT token validation                 |
+| **Spring WebSocket**              | —               | STOMP messaging                      |
+| **Spring Validation**             | —               | Request validation (Bean Validation) |
+| **Spring Cloud Gateway**          | 2025.1.3        | API Gateway (WebFlux-based)          |
+| **PostgreSQL**                    | 16              | Relational database                  |
+| **Flyway**                        | —               | Database migration                   |
+| **MinIO**                         | 8.5.17 (client) | S3-compatible object storage         |
+| **LiveKit Server SDK**            | 0.16.0          | Video/Audio call token generation    |
+| **SpringDoc OpenAPI**             | 3.0.2           | Swagger UI & API documentation       |
 
 ### Frontend
 
-| Công nghệ | Phiên bản | Mục đích |
-|---|---|---|
-| **React** | 19.2.8 | UI framework |
-| **TypeScript** | 6.0.2 | Type-safe JavaScript |
-| **Vite** | 8.3.0 | Build tool & dev server |
-| **React Router** | 7.18.4 | Client-side routing |
-| **Axios** | 1.20.0 | HTTP client |
-| **STOMP.js** | 7.3.0 | WebSocket STOMP client |
-| **LiveKit React** | 2.9.24 | Video/Audio call components |
-| **Tailwind CSS** | 4.3.3 | Utility-first CSS |
-| **shadcn/ui** | 4.21.0 | UI component library |
-| **Lucide React** | 1.49.0 | Icon library |
-| **Base UI** | 1.8.0 | Headless UI primitives |
+| Công nghệ         | Phiên bản | Mục đích                    |
+| ----------------- | --------- | --------------------------- |
+| **React**         | 19.2.8    | UI framework                |
+| **TypeScript**    | 6.0.2     | Type-safe JavaScript        |
+| **Vite**          | 8.3.0     | Build tool & dev server     |
+| **React Router**  | 7.18.4    | Client-side routing         |
+| **Axios**         | 1.20.0    | HTTP client                 |
+| **STOMP.js**      | 7.3.0     | WebSocket STOMP client      |
+| **LiveKit React** | 2.9.24    | Video/Audio call components |
+| **Tailwind CSS**  | 4.3.3     | Utility-first CSS           |
+| **shadcn/ui**     | 4.21.0    | UI component library        |
+| **Lucide React**  | 1.49.0    | Icon library                |
+| **Base UI**       | 1.8.0     | Headless UI primitives      |
 
 ### Infrastructure
 
-| Công nghệ | Mục đích |
-|---|---|
+| Công nghệ          | Mục đích                                     |
+| ------------------ | -------------------------------------------- |
 | **Docker Compose** | Container orchestration cho toàn bộ hệ thống |
-| **LiveKit Server** | Self-hosted WebRTC SFU server |
-| **MinIO Server** | Self-hosted S3-compatible object storage |
+| **LiveKit Server** | Self-hosted WebRTC SFU server                |
+| **MinIO Server**   | Self-hosted S3-compatible object storage     |
 
 ---
 
@@ -319,7 +319,7 @@ group-study-platform/
 
 ```
 ┌──────────────────┐       ┌──────────────────────┐       ┌──────────────────┐
-│      users       │       │    study_groups       │       │   group_members  │
+│      users       │       │    study_groups      │       │   group_members  │
 ├──────────────────┤       ├──────────────────────┤       ├──────────────────┤
 │ id          UUID │◄──┐   │ id           UUID    │◄──┐   │ id        UUID   │
 │ username  VC(50) │   │   │ name        VC(100)  │   │   │ group_id  UUID ──┤──► study_groups
@@ -329,46 +329,46 @@ group-study-platform/
 │ bio      VC(500) │   │   │ created_at  TSTAMP   │   │   └──────────────────┘
 │ avatar  VC(1000) │   │   │ updated_at  TSTAMP   │   │
 │ created_at TSAMP │   │   └──────────────────────┘   │   ┌──────────────────────┐
-│ updated_at TSAMP │   │                               │   │ group_join_requests   │
-└──────────────────┘   │                               │   ├──────────────────────┤
-         ▲             │                               │   │ id          UUID     │
-         │             │                               ├───│ group_id    UUID     │
-         │             │   ┌──────────────────────┐    │   │ user_id     UUID ────┤──► users
-         │             │   │   chat_messages       │   │   │ status     VC(20)   │
-         │             │   ├──────────────────────┤    │   │ created_at TSTAMP   │
-         │             │   │ id          UUID     │    │   │ updated_at TSTAMP   │
-         │             ├───│ group_id    UUID     │    │   └──────────────────────┘
-         │             │   │ sender_id   UUID ────┤──►─┘
+│ updated_at TSAMP │   │                              │   │ group_join_requests  │
+└──────────────────┘   │                              │   ├──────────────────────┤
+         ▲             │                              │   │ id          UUID     │
+         │             │                              ├───│ group_id    UUID     │
+         │             │   ┌──────────────────────┐   │   │ user_id     UUID ────┤──► users
+         │             │   │   chat_messages      │   │   │ status     VC(20)    │
+         │             │   ├──────────────────────┤   │   │ created_at TSTAMP    │
+         │             │   │ id          UUID     │   │   │ updated_at TSTAMP    │
+         │             ├───│ group_id    UUID     │   │   └──────────────────────┘
+         │             │   │ sender_id   UUID ────┤──►┘
          │             │   │ type       VC(20)    │        ┌──────────────────────┐
          │             │   │ content      TEXT    │        │     call_rooms       │
          │             │   │ media_url VC(1000)   │        ├──────────────────────┤
          │             │   │ duration_ms  INT     │        │ id          UUID     │
          │             │   │ created_at  TSTAMP   │        │ group_id    UUID ────┤──► study_groups
-         │             │   └──────────────────────┘        │ name       VC(100)  │
-         │             │                                   │ created_by  UUID ───┤──► users
-         │             │   ┌──────────────────────┐        │ created_at TSTAMP   │
-         │             │   │ friend_relationships  │        └──────────────────────┘
+         │             │   └──────────────────────┘        │ name       VC(100)   │
+         │             │                                   │ created_by  UUID  ───┤──► users
+         │             │   ┌──────────────────────┐        │ created_at TSTAMP    │
+         │             │   │ friend_relationships │        └──────────────────────┘
          │             │   ├──────────────────────┤
-         │             ├───│ requester_id UUID     │        ┌──────────────────────┐
-         │             └───│ addressee_id UUID     │        │   direct_messages    │
+         │             ├───│ requester_id UUID    │        ┌──────────────────────┐
+         │             └───│ addressee_id UUID    │        │   direct_messages    │
          │                 │ status     VC(20)    │        ├──────────────────────┤
          │                 │ created_at TSTAMP    │        │ id          UUID     │
          │                 │ updated_at TSTAMP    │        │ sender_id   UUID ────┤──► users
          │                 └──────────────────────┘        │ receiver_id UUID ────┤──► users
          │                                                 │ content      TEXT    │
          │                 ┌──────────────────────┐        │ created_at  TSTAMP   │
-         │                 │  daily_challenges     │        └──────────────────────┘
+         │                 │  daily_challenges    │        └──────────────────────┘
          │                 ├──────────────────────┤
          │                 │ id            UUID   │        ┌────────────────────────────┐
-         │                 │ challenge_date DATE   │        │ daily_challenge_attempts    │
-         │                 │ question       TEXT   │        ├────────────────────────────┤
-         │                 │ option_a       TEXT   │        │ id            UUID         │
-         │                 │ option_b       TEXT   │◄───────│ challenge_id  UUID         │
-         │                 │ option_c       TEXT   │        │ user_id       UUID ────────┤──► users
-         │                 │ option_d       TEXT   │        │ selected_option VC(1)      │
+         │                 │ challenge_date DATE  │        │ daily_challenge_attempts   │
+         │                 │ question       TEXT  │        ├────────────────────────────┤
+         │                 │ option_a       TEXT  │        │ id            UUID         │
+         │                 │ option_b       TEXT  │◄───────│ challenge_id  UUID         │
+         │                 │ option_c       TEXT  │        │ user_id       UUID ────────┤──► users
+         │                 │ option_d       TEXT  │        │ selected_option VC(1)      │
          │                 │ correct_option VC(1) │        │ is_correct    BOOLEAN      │
-         │                 │ explanation    TEXT   │        │ created_at    TSTAMP       │
-         │                 │ created_at    TSTAMP  │        └────────────────────────────┘
+         │                 │ explanation    TEXT  │        │ created_at    TSTAMP       │
+         │                 │ created_at    TSTAMP │        └────────────────────────────┘
          │                 └──────────────────────┘
          │
          └─── (foreign key references)
@@ -376,35 +376,35 @@ group-study-platform/
 
 ### Danh sách Entities
 
-| Entity | Table | Mô tả |
-|---|---|---|
-| `User` | `users` | Người dùng hệ thống (username, email, password hash, profile) |
-| `StudyGroup` | `study_groups` | Nhóm học tập (name, description, owner, visibility: PUBLIC/PRIVATE) |
-| `GroupMember` | `group_members` | Thành viên nhóm (role: OWNER/MEMBER) |
-| `GroupJoinRequest` | `group_join_requests` | Yêu cầu tham gia nhóm private (status: PENDING/APPROVED/REJECTED) |
-| `ChatMessage` | `chat_messages` | Tin nhắn nhóm (type: TEXT/IMAGE/AUDIO, hỗ trợ media URL & duration) |
-| `CallRoom` | `call_rooms` | Phòng gọi video/audio trong nhóm |
-| `FriendRelationship` | `friend_relationships` | Quan hệ bạn bè (status: PENDING/ACCEPTED) |
-| `DirectMessage` | `direct_messages` | Tin nhắn trực tiếp giữa hai người dùng |
-| `DailyChallenge` | `daily_challenges` | Câu hỏi trắc nghiệm hàng ngày (4 đáp án A-D) |
-| `DailyChallengeAttempt` | `daily_challenge_attempts` | Lượt trả lời thử thách của người dùng |
+| Entity                  | Table                      | Mô tả                                                               |
+| ----------------------- | -------------------------- | ------------------------------------------------------------------- |
+| `User`                  | `users`                    | Người dùng hệ thống (username, email, password hash, profile)       |
+| `StudyGroup`            | `study_groups`             | Nhóm học tập (name, description, owner, visibility: PUBLIC/PRIVATE) |
+| `GroupMember`           | `group_members`            | Thành viên nhóm (role: OWNER/MEMBER)                                |
+| `GroupJoinRequest`      | `group_join_requests`      | Yêu cầu tham gia nhóm private (status: PENDING/APPROVED/REJECTED)   |
+| `ChatMessage`           | `chat_messages`            | Tin nhắn nhóm (type: TEXT/IMAGE/AUDIO, hỗ trợ media URL & duration) |
+| `CallRoom`              | `call_rooms`               | Phòng gọi video/audio trong nhóm                                    |
+| `FriendRelationship`    | `friend_relationships`     | Quan hệ bạn bè (status: PENDING/ACCEPTED)                           |
+| `DirectMessage`         | `direct_messages`          | Tin nhắn trực tiếp giữa hai người dùng                              |
+| `DailyChallenge`        | `daily_challenges`         | Câu hỏi trắc nghiệm hàng ngày (4 đáp án A-D)                        |
+| `DailyChallengeAttempt` | `daily_challenge_attempts` | Lượt trả lời thử thách của người dùng                               |
 
 ### Database Migrations (Flyway)
 
-| Version | Mô tả |
-|---|---|
-| `V1` | Tạo bảng `users` |
-| `V2` | Tạo bảng `study_groups` |
-| `V3` | Tạo bảng `group_members` |
-| `V4` | Thêm trường profile cho `users` (display_name, bio, avatar_url) |
-| `V5` | Tạo bảng `friend_relationships` |
-| `V6` | Tạo bảng `chat_messages` |
-| `V7` | Thêm trường `duration_ms` cho voice messages |
-| `V8` | Thêm trường `visibility` cho `study_groups` |
-| `V9` | Tạo bảng `group_join_requests` |
-| `V10` | Tạo bảng `call_rooms` |
-| `V11` | Tạo bảng `direct_messages` |
-| `V12` | Tạo bảng `daily_challenges` và `daily_challenge_attempts` |
+| Version | Mô tả                                                           |
+| ------- | --------------------------------------------------------------- |
+| `V1`    | Tạo bảng `users`                                                |
+| `V2`    | Tạo bảng `study_groups`                                         |
+| `V3`    | Tạo bảng `group_members`                                        |
+| `V4`    | Thêm trường profile cho `users` (display_name, bio, avatar_url) |
+| `V5`    | Tạo bảng `friend_relationships`                                 |
+| `V6`    | Tạo bảng `chat_messages`                                        |
+| `V7`    | Thêm trường `duration_ms` cho voice messages                    |
+| `V8`    | Thêm trường `visibility` cho `study_groups`                     |
+| `V9`    | Tạo bảng `group_join_requests`                                  |
+| `V10`   | Tạo bảng `call_rooms`                                           |
+| `V11`   | Tạo bảng `direct_messages`                                      |
+| `V12`   | Tạo bảng `daily_challenges` và `daily_challenge_attempts`       |
 
 ---
 
@@ -487,59 +487,60 @@ group-study-platform/
 
 ### Authentication (`/api/auth`)
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | Đăng ký tài khoản | ❌ |
-| `POST` | `/api/auth/login` | Đăng nhập, nhận JWT token | ❌ |
-| `GET` | `/api/auth/me` | Lấy thông tin user hiện tại | ✅ |
+| Method | Endpoint             | Mô tả                       | Auth |
+| ------ | -------------------- | --------------------------- | ---- |
+| `POST` | `/api/auth/register` | Đăng ký tài khoản           | ❌   |
+| `POST` | `/api/auth/login`    | Đăng nhập, nhận JWT token   | ❌   |
+| `GET`  | `/api/auth/me`       | Lấy thông tin user hiện tại | ✅   |
 
 ### Study Groups (`/api/groups`)
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `POST` | `/api/groups` | Tạo nhóm mới | ✅ |
-| `GET` | `/api/groups` | Danh sách nhóm (search, paginated) | ✅ |
-| `GET` | `/api/groups/{groupId}` | Chi tiết nhóm | ✅ |
-| `DELETE` | `/api/groups/{groupId}` | Xóa nhóm (owner only) | ✅ |
-| `POST` | `/api/groups/{groupId}/join` | Tham gia nhóm | ✅ |
-| `DELETE` | `/api/groups/{groupId}/members/me` | Rời nhóm | ✅ |
-| `GET` | `/api/groups/{groupId}/members` | Danh sách thành viên | ✅ |
+| Method   | Endpoint                           | Mô tả                              | Auth |
+| -------- | ---------------------------------- | ---------------------------------- | ---- |
+| `POST`   | `/api/groups`                      | Tạo nhóm mới                       | ✅   |
+| `GET`    | `/api/groups`                      | Danh sách nhóm (search, paginated) | ✅   |
+| `GET`    | `/api/groups/{groupId}`            | Chi tiết nhóm                      | ✅   |
+| `DELETE` | `/api/groups/{groupId}`            | Xóa nhóm (owner only)              | ✅   |
+| `POST`   | `/api/groups/{groupId}/join`       | Tham gia nhóm                      | ✅   |
+| `DELETE` | `/api/groups/{groupId}/members/me` | Rời nhóm                           | ✅   |
+| `GET`    | `/api/groups/{groupId}/members`    | Danh sách thành viên               | ✅   |
 
 ### Study Rooms (`/api/groups/{groupId}`)
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `GET` | `/api/groups/{groupId}/messages` | Lịch sử chat (paginated) | ✅ |
-| `POST` | `/api/groups/{groupId}/messages` | Gửi tin nhắn (multipart) | ✅ |
-| `POST` | `/api/groups/{groupId}/video/token` | Lấy LiveKit token | ✅ |
+| Method | Endpoint                            | Mô tả                    | Auth |
+| ------ | ----------------------------------- | ------------------------ | ---- |
+| `GET`  | `/api/groups/{groupId}/messages`    | Lịch sử chat (paginated) | ✅   |
+| `POST` | `/api/groups/{groupId}/messages`    | Gửi tin nhắn (multipart) | ✅   |
+| `POST` | `/api/groups/{groupId}/video/token` | Lấy LiveKit token        | ✅   |
 
 ### Users (`/api/users`)
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `GET` | `/api/users/me/profile` | Xem profile bản thân | ✅ |
-| `PATCH` | `/api/users/me/profile` | Cập nhật profile | ✅ |
-| `PATCH` | `/api/users/me/avatar` | Upload avatar | ✅ |
-| `GET` | `/api/users/{userId}/profile` | Xem profile người khác | ✅ |
-| `GET` | `/api/users/{userId}/avatar` | Lấy avatar (public) | ❌ |
-| `GET` | `/api/users/search` | Tìm kiếm user | ✅ |
+| Method  | Endpoint                      | Mô tả                  | Auth |
+| ------- | ----------------------------- | ---------------------- | ---- |
+| `GET`   | `/api/users/me/profile`       | Xem profile bản thân   | ✅   |
+| `PATCH` | `/api/users/me/profile`       | Cập nhật profile       | ✅   |
+| `PATCH` | `/api/users/me/avatar`        | Upload avatar          | ✅   |
+| `GET`   | `/api/users/{userId}/profile` | Xem profile người khác | ✅   |
+| `GET`   | `/api/users/{userId}/avatar`  | Lấy avatar (public)    | ❌   |
+| `GET`   | `/api/users/search`           | Tìm kiếm user          | ✅   |
 
 ### Friends (`/api/friends`)
 
-| Method | Endpoint | Mô tả | Auth |
-|---|---|---|---|
-| `GET` | `/api/friends` | Danh sách bạn bè | ✅ |
-| `POST` | `/api/friends/requests/{userId}` | Gửi lời mời kết bạn | ✅ |
-| `GET` | `/api/friends/requests/incoming` | Lời mời đến | ✅ |
-| `GET` | `/api/friends/requests/outgoing` | Lời mời đi | ✅ |
-| `POST` | `/api/friends/requests/{requestId}/accept` | Chấp nhận | ✅ |
-| `POST` | `/api/friends/requests/{requestId}/reject` | Từ chối | ✅ |
-| `DELETE` | `/api/friends/requests/{requestId}` | Hủy lời mời | ✅ |
-| `DELETE` | `/api/friends/{friendUserId}` | Xóa bạn bè | ✅ |
+| Method   | Endpoint                                   | Mô tả               | Auth |
+| -------- | ------------------------------------------ | ------------------- | ---- |
+| `GET`    | `/api/friends`                             | Danh sách bạn bè    | ✅   |
+| `POST`   | `/api/friends/requests/{userId}`           | Gửi lời mời kết bạn | ✅   |
+| `GET`    | `/api/friends/requests/incoming`           | Lời mời đến         | ✅   |
+| `GET`    | `/api/friends/requests/outgoing`           | Lời mời đi          | ✅   |
+| `POST`   | `/api/friends/requests/{requestId}/accept` | Chấp nhận           | ✅   |
+| `POST`   | `/api/friends/requests/{requestId}/reject` | Từ chối             | ✅   |
+| `DELETE` | `/api/friends/requests/{requestId}`        | Hủy lời mời         | ✅   |
+| `DELETE` | `/api/friends/{friendUserId}`              | Xóa bạn bè          | ✅   |
 
 ### Swagger UI
 
 API documentation tự động được tạo bởi SpringDoc OpenAPI và truy cập tại:
+
 - **Swagger UI**: `http://localhost:8081/swagger-ui.html`
 - **OpenAPI JSON**: `http://localhost:8081/v3/api-docs`
 
@@ -573,19 +574,19 @@ Frontend (STOMP.js)          Backend (Spring WebSocket)
 
 ### WebSocket Endpoints
 
-| Endpoint | Protocol | Mô tả |
-|---|---|---|
-| `/ws` | STOMP over WebSocket | Main WebSocket endpoint |
+| Endpoint | Protocol             | Mô tả                   |
+| -------- | -------------------- | ----------------------- |
+| `/ws`    | STOMP over WebSocket | Main WebSocket endpoint |
 
 ### STOMP Destinations
 
-| Destination | Loại | Mô tả |
-|---|---|---|
-| `/app/groups/{groupId}/messages` | SEND | Gửi tin nhắn chat nhóm |
-| `/app/groups/{groupId}/typing` | SEND | Gửi typing indicator |
+| Destination                        | Loại      | Mô tả                                         |
+| ---------------------------------- | --------- | --------------------------------------------- |
+| `/app/groups/{groupId}/messages`   | SEND      | Gửi tin nhắn chat nhóm                        |
+| `/app/groups/{groupId}/typing`     | SEND      | Gửi typing indicator                          |
 | `/topic/groups/{groupId}/messages` | SUBSCRIBE | Nhận tin nhắn chat nhóm (membership required) |
-| `/topic/groups/{groupId}/typing` | SUBSCRIBE | Nhận typing indicator |
-| `/user/queue/messages` | SUBSCRIBE | Nhận tin nhắn trực tiếp (auto user-resolved) |
+| `/topic/groups/{groupId}/typing`   | SUBSCRIBE | Nhận typing indicator                         |
+| `/user/queue/messages`             | SUBSCRIBE | Nhận tin nhắn trực tiếp (auto user-resolved)  |
 
 ### Bảo mật WebSocket
 
@@ -617,15 +618,15 @@ Frontend (STOMP.js)          Backend (Spring WebSocket)
 └──────────┘                              └──────────┘
 ```
 
-| Aspect | Implementation |
-|---|---|
-| **Password Storage** | BCrypt hash (PasswordConfig) |
-| **Token Format** | JWT (RSA-signed via JwtConfig) |
-| **Token Lifetime** | Configurable (default: 3600s = 1 hour) |
-| **Session** | Stateless (`SessionCreationPolicy.STATELESS`) |
-| **CORS** | Gateway-level CORS (localhost:\* pattern) |
-| **Public Endpoints** | `/api/auth/register`, `/api/auth/login`, `/swagger-ui/**`, `/ws/**`, `/api/users/*/avatar` |
-| **Protected Endpoints** | Tất cả endpoints khác yêu cầu valid JWT |
+| Aspect                  | Implementation                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| **Password Storage**    | BCrypt hash (PasswordConfig)                                                               |
+| **Token Format**        | JWT (RSA-signed via JwtConfig)                                                             |
+| **Token Lifetime**      | Configurable (default: 3600s = 1 hour)                                                     |
+| **Session**             | Stateless (`SessionCreationPolicy.STATELESS`)                                              |
+| **CORS**                | Gateway-level CORS (localhost:\* pattern)                                                  |
+| **Public Endpoints**    | `/api/auth/register`, `/api/auth/login`, `/swagger-ui/**`, `/ws/**`, `/api/users/*/avatar` |
+| **Protected Endpoints** | Tất cả endpoints khác yêu cầu valid JWT                                                    |
 
 ---
 
@@ -681,36 +682,36 @@ npm run dev
 
 ### Port mặc định
 
-| Service | Port | Mô tả |
-|---|---|---|
-| **Frontend** | `5173` | Vite dev server |
-| **Gateway** | `8080` | API Gateway |
-| **Backend** | `8081` | Spring Boot REST API + WebSocket |
-| **PostgreSQL** | `5432` | Database |
-| **MinIO API** | `9000` | Object storage API |
-| **MinIO Console** | `9001` | MinIO web UI |
-| **LiveKit** | `7880` | WebRTC signaling |
-| **LiveKit** | `7881` | WebRTC TURN/TCP |
-| **LiveKit** | `7882/udp` | WebRTC TURN/UDP |
+| Service           | Port       | Mô tả                            |
+| ----------------- | ---------- | -------------------------------- |
+| **Frontend**      | `5173`     | Vite dev server                  |
+| **Gateway**       | `8080`     | API Gateway                      |
+| **Backend**       | `8081`     | Spring Boot REST API + WebSocket |
+| **PostgreSQL**    | `5432`     | Database                         |
+| **MinIO API**     | `9000`     | Object storage API               |
+| **MinIO Console** | `9001`     | MinIO web UI                     |
+| **LiveKit**       | `7880`     | WebRTC signaling                 |
+| **LiveKit**       | `7881`     | WebRTC TURN/TCP                  |
+| **LiveKit**       | `7882/udp` | WebRTC TURN/UDP                  |
 
 ---
 
 ## ⚙ Biến môi trường
 
-| Biến | Mặc định | Mô tả |
-|---|---|---|
-| `POSTGRES_DB` | `group_learning` | Tên database |
-| `POSTGRES_USER` | `postgres` | Database username |
-| `POSTGRES_PASSWORD` | `postgres` | Database password |
-| `BACKEND_PORT` | `8081` | Port backend |
-| `GATEWAY_PORT` | `8080` | Port gateway |
-| `FRONTEND_PORT` | `5173` | Port frontend |
-| `JWT_SECRET` | `dev-only-secret-key...` | JWT signing secret |
-| `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `3600` | Token lifetime (giây) |
-| `MINIO_ROOT_USER` | `minioadmin` | MinIO admin username |
-| `MINIO_ROOT_PASSWORD` | `minioadmin` | MinIO admin password |
-| `LIVEKIT_API_KEY` | `devkey` | LiveKit API key |
-| `LIVEKIT_API_SECRET` | `secret` | LiveKit API secret |
+| Biến                                  | Mặc định                 | Mô tả                 |
+| ------------------------------------- | ------------------------ | --------------------- |
+| `POSTGRES_DB`                         | `group_learning`         | Tên database          |
+| `POSTGRES_USER`                       | `postgres`               | Database username     |
+| `POSTGRES_PASSWORD`                   | `postgres`               | Database password     |
+| `BACKEND_PORT`                        | `8081`                   | Port backend          |
+| `GATEWAY_PORT`                        | `8080`                   | Port gateway          |
+| `FRONTEND_PORT`                       | `5173`                   | Port frontend         |
+| `JWT_SECRET`                          | `dev-only-secret-key...` | JWT signing secret    |
+| `JWT_ACCESS_TOKEN_EXPIRATION_SECONDS` | `3600`                   | Token lifetime (giây) |
+| `MINIO_ROOT_USER`                     | `minioadmin`             | MinIO admin username  |
+| `MINIO_ROOT_PASSWORD`                 | `minioadmin`             | MinIO admin password  |
+| `LIVEKIT_API_KEY`                     | `devkey`                 | LiveKit API key       |
+| `LIVEKIT_API_SECRET`                  | `secret`                 | LiveKit API secret    |
 
 ---
 
