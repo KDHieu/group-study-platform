@@ -1,5 +1,10 @@
-import { Outlet } from "react-router-dom"
+import {
+    Outlet,
+    useLocation,
+} from "react-router-dom"
 
+import CallProvider from "@/call/CallProvider"
+import GlobalCallOverlay from "@/call/GlobalCallOverlay"
 import AppHeader from "@/components/layout/AppHeader"
 import AppSidebar from "@/components/layout/AppSidebar"
 import {
@@ -8,17 +13,37 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function AppLayout() {
+    const location =
+        useLocation()
+
+    const isStudyRooms =
+        location.pathname ===
+        "/rooms" ||
+        location.pathname.startsWith(
+            "/rooms/",
+        )
+
     return (
-        <SidebarProvider>
-            <AppSidebar />
+        <CallProvider>
+            <SidebarProvider>
+                <AppSidebar />
 
-            <SidebarInset>
-                <AppHeader />
+                <SidebarInset className="min-h-svh">
+                    <AppHeader />
 
-                <main className="flex-1 p-6">
-                    <Outlet />
-                </main>
-            </SidebarInset>
-        </SidebarProvider>
+                    <main
+                        className={
+                            isStudyRooms
+                                ? "min-h-0 flex-1 overflow-hidden"
+                                : "flex-1 p-6"
+                        }
+                    >
+                        <Outlet />
+                    </main>
+                </SidebarInset>
+
+                <GlobalCallOverlay />
+            </SidebarProvider>
+        </CallProvider>
     )
 }

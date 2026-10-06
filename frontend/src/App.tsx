@@ -2,73 +2,162 @@ import {
     Navigate,
     Route,
     Routes,
-} from "react-router-dom";
+    useParams,
+} from "react-router-dom"
 
-import ProtectedRoute from "@/auth/ProtectedRoute";
-import AppLayout from "@/components/layout/AppLayout";
-import DashboardPage from "@/pages/DashboardPage";
-import GroupDetailPage from "@/pages/GroupDetailPage";
-import GroupsPage from "@/pages/GroupsPage";
-import LoginPage from "@/pages/LoginPage";
-import ProfilePage from "@/pages/ProfilePage";
-import RegisterPage from "@/pages/RegisterPage";
-import FriendsPage from "@/pages/FriendsPage";
+import ProtectedRoute from "@/auth/ProtectedRoute"
+import AppLayout from "@/components/layout/AppLayout"
+import DashboardPage from "@/pages/DashboardPage"
+import FriendsPage from "@/pages/FriendsPage"
+import GroupDetailPage from "@/pages/GroupDetailPage"
+import GroupsPage from "@/pages/GroupsPage"
+import LoginPage from "@/pages/LoginPage"
+import ProfilePage from "@/pages/ProfilePage"
+import RegisterPage from "@/pages/RegisterPage"
+import StudyRoomsPage from "@/pages/StudyRoomsPage"
+
+function LegacyStudyRoomRedirect() {
+    const { groupId } =
+        useParams()
+
+    if (!groupId) {
+        return (
+            <Navigate
+                to="/rooms"
+                replace
+            />
+        )
+    }
+
+    return (
+        <Navigate
+            to={`/rooms/${groupId}`}
+            replace
+        />
+    )
+}
 
 function App() {
     return (
         <Routes>
             <Route
                 path="/login"
-                element={<LoginPage />}
+                element={
+                    <LoginPage />
+                }
             />
 
             <Route
                 path="/register"
-                element={<RegisterPage />}
+                element={
+                    <RegisterPage />
+                }
             />
 
-            <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
+            <Route
+                element={
+                    <ProtectedRoute />
+                }
+            >
+                <Route
+                    element={
+                        <AppLayout />
+                    }
+                >
                     <Route
                         path="/"
-                        element={<DashboardPage />}
+                        element={
+                            <DashboardPage />
+                        }
                     />
 
                     <Route
                         path="/profile"
-                        element={<ProfilePage />}
+                        element={
+                            <ProfilePage />
+                        }
                     />
 
                     <Route
                         path="/groups"
-                        element={<GroupsPage />}
+                        element={
+                            <GroupsPage />
+                        }
                     />
 
                     <Route
                         path="/groups/:groupId"
-                        element={<GroupDetailPage />}
+                        element={
+                            <GroupDetailPage />
+                        }
                     />
 
                     <Route
                         path="/rooms"
-                        element={<div>Study Rooms</div>}
+                        element={
+                            <StudyRoomsPage />
+                        }
+                    />
+
+                    <Route
+                        path="/rooms/:groupId"
+                        element={
+                            <StudyRoomsPage />
+                        }
+                    />
+
+                    <Route
+                        path="/groups/:groupId/room"
+                        element={
+                            <LegacyStudyRoomRedirect />
+                        }
+                    />
+
+                    <Route
+                        path="/groups/:groupId/room/chat"
+                        element={
+                            <LegacyStudyRoomRedirect />
+                        }
+                    />
+
+                    <Route
+                        path="/groups/:groupId/room/video"
+                        element={
+                            <LegacyStudyRoomRedirect />
+                        }
+                    />
+
+                    <Route
+                        path="/groups/:groupId/room/members"
+                        element={
+                            <LegacyStudyRoomRedirect />
+                        }
                     />
 
                     <Route
                         path="/friends"
-                        element={<FriendsPage />}
+                        element={
+                            <FriendsPage />
+                        }
                     />
 
                     <Route
                         path="/challenges"
-                        element={<div>Challenges</div>}
+                        element={
+                            <div>
+                                Challenges
+                            </div>
+                        }
                     />
 
                     <Route
                         path="/messages"
-                        element={<div>Messages</div>}
+                        element={
+                            <div>
+                                Messages
+                            </div>
+                        }
                     />
-
                 </Route>
             </Route>
 
@@ -82,7 +171,7 @@ function App() {
                 }
             />
         </Routes>
-    );
+    )
 }
 
-export default App;
+export default App

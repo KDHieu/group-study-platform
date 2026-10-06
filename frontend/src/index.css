@@ -118,13 +118,34 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
-  html {
-    @apply font-sans;
+
+    html {
+        @apply font-sans;
     }
+}
+
+/*
+ * The mini call has its own compact controls.
+ * Hide LiveKit's default control bar only while minimized.
+ */
+.mini-call-conference .lk-control-bar {
+    display: none !important;
+}
+
+/*
+ * Let the video layout consume the entire available area
+ * after LiveKit's default controls have been removed.
+ */
+.mini-call-conference,
+.mini-call-conference > div,
+.mini-call-conference .lk-video-conference {
+    min-height: 0;
+    height: 100%;
 }

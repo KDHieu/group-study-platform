@@ -6,7 +6,7 @@ import {
     Trophy,
     UserRound,
     Users,
-} from "lucide-react";
+} from "lucide-react"
 
 export const mainNavigation = [
     {
@@ -44,4 +44,4 @@ export const mainNavigation = [
         path: "/messages",
         icon: MessageCircle,
     },
-] as const;
+] as const
