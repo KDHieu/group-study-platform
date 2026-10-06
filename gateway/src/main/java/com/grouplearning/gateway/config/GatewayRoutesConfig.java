@@ -63,6 +63,11 @@ public class GatewayRoutesConfig {
                         .uri(backendUrl)
                 )
 
+                .route("challenge-service", route -> route
+                        .path("/api/challenges/**")
+                        .uri(backendUrl)
+                )
+
                 .build();
     }
 }
