@@ -47,16 +47,16 @@ Hệ thống sử dụng kiến trúc **microservices** với mô hình **API Ga
 │   ┌─────────────────────────────────────────────────────────────┐   │
 │   │              Frontend (React + Vite + TypeScript)           │   │
 │   │                        :5173                                │   │
-│   │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────────────┐   │   │
-│   │  │  Pages   │ │Components│ │  Auth  │ │  API Layer     │   │   │
-│   │  │Dashboard │ │GroupChat │ │Context │ │ Axios + STOMP  │   │   │
-│   │  │Groups    │ │VoiceRec. │ │JWT Mgmt│ │                │   │   │
-│   │  │Friends   │ │VideoCall │ │        │ │                │   │   │
-│   │  │Messages  │ │Sidebar   │ │        │ │                │   │   │
-│   │  │Rooms     │ │          │ │        │ │                │   │   │
-│   │  │Challenges│ │          │ │        │ │                │   │   │
-│   │  │Profile   │ │          │ │        │ │                │   │   │
-│   │  └──────────┘ └──────────┘ └────────┘ └────────────────┘   │   │
+│   │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────────────┐    │   │
+│   │  │  Pages   │ │Components│ │  Auth  │ │  API Layer     │    │   │
+│   │  │Dashboard │ │GroupChat │ │Context │ │ Axios + STOMP  │    │   │
+│   │  │Groups    │ │VoiceRec. │ │JWT Mgmt│ │                │    │   │
+│   │  │Friends   │ │VideoCall │ │        │ │                │    │   │
+│   │  │Messages  │ │Sidebar   │ │        │ │                │    │   │
+│   │  │Rooms     │ │          │ │        │ │                │    │   │
+│   │  │Challenges│ │          │ │        │ │                │    │   │
+│   │  │Profile   │ │          │ │        │ │                │    │   │
+│   │  └──────────┘ └──────────┘ └────────┘ └────────────────┘    │   │
 │   └───────────────────────┬─────────────────────────────────────┘   │
 │                           │ HTTP (REST) + WebSocket (STOMP)         │
 └───────────────────────────┼─────────────────────────────────────────┘
@@ -115,16 +115,16 @@ Hệ thống sử dụng kiến trúc **microservices** với mô hình **API Ga
 ┌───────────────────────────┼─────────────────────────────────────────┐
 │                INFRASTRUCTURE LAYER                                 │
 │                           ▼                                         │
-│   ┌──────────────┐  ┌──────────────┐  ┌─────────────────────┐      │
-│   │  PostgreSQL  │  │    MinIO      │  │     LiveKit SFU     │      │
-│   │    :5432     │  │  :9000/:9001  │  │   :7880/:7881/:7882 │      │
-│   │              │  │              │  │                     │      │
-│   │  • Users     │  │  • Avatars   │  │  • WebRTC rooms     │      │
-│   │  • Groups    │  │  • Voice msg │  │  • Video/Audio call │      │
-│   │  • Messages  │  │  • Images    │  │  • Token auth       │      │
-│   │  • Friends   │  │              │  │                     │      │
-│   │  • Challenges│  │              │  │                     │      │
-│   └──────────────┘  └──────────────┘  └─────────────────────┘      │
+│   ┌──────────────┐  ┌──────────────┐  ┌─────────────────────┐       │
+│   │  PostgreSQL  │  │    MinIO     │  │     LiveKit SFU     │       │
+│   │    :5432     │  │  :9000/:9001 │  │   :7880/:7881/:7882 │       │
+│   │              │  │              │  │                     │       │
+│   │  • Users     │  │  • Avatars   │  │  • WebRTC rooms     │       │
+│   │  • Groups    │  │  • Voice msg │  │  • Video/Audio call │       │
+│   │  • Messages  │  │  • Images    │  │  • Token auth       │       │
+│   │  • Friends   │  │              │  │                     │       │
+│   │  • Challenges│  │              │  │                     │       │
+│   └──────────────┘  └──────────────┘  └─────────────────────┘       │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
